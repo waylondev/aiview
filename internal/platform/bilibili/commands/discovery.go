@@ -45,6 +45,9 @@ func NewHotCmd(getClient func() Client) *cobra.Command {
 // NewRankCmd creates the rank command.
 func NewRankCmd(getClient func() Client) *cobra.Command {
 	var maxResults int
+	var rid int
+	var day int
+	var typeStr string
 
 	cmd := &cobra.Command{
 		Use:   "rank",
@@ -54,7 +57,7 @@ func NewRankCmd(getClient func() Client) *cobra.Command {
 			client := getClient()
 			format := GetOutputFormat(cmd)
 
-			videos, err := client.GetRankVideos(3)
+			videos, err := client.GetRankVideos(rid, day, typeStr)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get rankings: %v", err), format)
 				return err
@@ -74,6 +77,9 @@ func NewRankCmd(getClient func() Client) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&maxResults, "max", "n", 20, "Max results")
+	cmd.Flags().IntVar(&rid, "rid", 0, "Region ID (0=all)")
+	cmd.Flags().IntVar(&day, "day", 3, "Days: 1/3/7/30")
+	cmd.Flags().StringVar(&typeStr, "type", "all", "Type: all/origin/rookie")
 	return cmd
 }
 

@@ -13,6 +13,9 @@ func NewSearchCmd(getClient func() Client) *cobra.Command {
 		searchType string
 		maxResults int
 		page       int
+		order      string
+		duration   int
+		tid        int
 	)
 
 	cmd := &cobra.Command{
@@ -27,7 +30,7 @@ func NewSearchCmd(getClient func() Client) *cobra.Command {
 
 			switch searchType {
 			case "video":
-				results, err := client.SearchVideo(keyword, page)
+				results, err := client.SearchVideo(keyword, page, order, duration, tid)
 				if err != nil {
 					output.EmitError("api_error", fmt.Sprintf("Search failed: %v", err), format)
 					return err
@@ -86,6 +89,9 @@ func NewSearchCmd(getClient func() Client) *cobra.Command {
 	cmd.Flags().StringVarP(&searchType, "type", "t", "video", "Search type: video or user")
 	cmd.Flags().IntVarP(&maxResults, "max", "n", 10, "Max results")
 	cmd.Flags().IntVarP(&page, "page", "p", 1, "Page number")
+	cmd.Flags().StringVarP(&order, "order", "o", "", "Sort order: click/pubdate/dm/score")
+	cmd.Flags().IntVarP(&duration, "duration", "d", 0, "Duration filter: 0=all, 1=<5min, 2=5-30min, 3=>30min")
+	cmd.Flags().IntVar(&tid, "tid", 0, "Category ID filter")
 
 	return cmd
 }

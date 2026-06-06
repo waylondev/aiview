@@ -10,6 +10,7 @@ import (
 // NewFavoritesCmd creates the favorites command.
 func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	var max int
+	var page int
 
 	cmd := &cobra.Command{
 		Use:   "favorites",
@@ -32,7 +33,7 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return err
 			}
 
-			folders, err := client.GetFavoriteList(info.MID)
+			folders, err := client.GetFavoriteList(info.MID, page)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get favorites: %v", err), format)
 				return err
@@ -55,12 +56,14 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 	}
 
 	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of folders to show")
+	cmd.Flags().IntVarP(&page, "page", "p", 1, "Page number")
 	return cmd
 }
 
 // NewFollowingCmd creates the following command.
 func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	var max int
+	var page int
 
 	cmd := &cobra.Command{
 		Use:   "following",
@@ -83,7 +86,7 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return err
 			}
 
-			users, err := client.GetFollowingList(info.MID, 1)
+			users, err := client.GetFollowingList(info.MID, page)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get following list: %v", err), format)
 				return err
@@ -109,12 +112,14 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 	}
 
 	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of users to show")
+	cmd.Flags().IntVarP(&page, "page", "p", 1, "Page number")
 	return cmd
 }
 
 // NewHistoryCmd creates the history command.
 func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	var max int
+	var page int
 
 	cmd := &cobra.Command{
 		Use:   "history",
@@ -135,7 +140,7 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 			if max > 0 {
 				count = max
 			}
-			items, err := client.GetWatchHistory(1, count)
+			items, err := client.GetWatchHistory(page, count)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get watch history: %v", err), format)
 				return err
@@ -155,6 +160,7 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 	}
 
 	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of history items to show")
+	cmd.Flags().IntVarP(&page, "page", "p", 1, "Page number")
 	return cmd
 }
 

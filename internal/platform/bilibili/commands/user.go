@@ -49,6 +49,9 @@ func NewUserCmd(getClient func() Client) *cobra.Command {
 // NewUserVideosCmd creates the user-videos command.
 func NewUserVideosCmd(getClient func() Client) *cobra.Command {
 	var maxResults int
+	var order string
+	var tid int
+	var keyword string
 
 	cmd := &cobra.Command{
 		Use:   "user-videos <UID>",
@@ -65,7 +68,7 @@ func NewUserVideosCmd(getClient func() Client) *cobra.Command {
 				return err
 			}
 
-			videos, err := client.GetUserVideos(uid, maxResults)
+			videos, err := client.GetUserVideos(uid, maxResults, order, tid, keyword)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get user videos: %v", err), format)
 				return err
@@ -88,5 +91,8 @@ func NewUserVideosCmd(getClient func() Client) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&maxResults, "max", "n", 10, "Max results")
+	cmd.Flags().StringVar(&order, "order", "pubdate", "Sort order: pubdate/click/stow")
+	cmd.Flags().IntVar(&tid, "tid", 0, "Category ID filter")
+	cmd.Flags().StringVar(&keyword, "keyword", "", "Search keyword within user videos")
 	return cmd
 }

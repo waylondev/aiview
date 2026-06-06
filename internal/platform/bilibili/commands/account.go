@@ -43,7 +43,12 @@ func NewLoginCmd(authStore AuthProvider, getClient func() Client) *cobra.Command
 Three methods supported:
   1. No arguments: QR code scan login
   2. --sessdata: Pass SESSDATA Cookie directly
-  3. --sessdata + --bili-jct: Pass full credential (supports write operations)`,
+  3. --sessdata + --bili-jct: Pass full credential (supports write operations)
+
+How to get bili_jct:
+  1. Open browser, login to bilibili.com
+  2. Press F12 → Application → Cookies → bilibili.com
+  3. Copy the value of bili_jct`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := GetOutputFormat(cmd)
 

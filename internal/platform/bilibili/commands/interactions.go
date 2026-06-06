@@ -10,7 +10,9 @@ import (
 
 // NewLikeCmd creates the like command.
 func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
-	return &cobra.Command{
+	var undo bool
+
+	cmd := &cobra.Command{
 		Use:   "like <BV>",
 		Short: "Like video",
 		Long:  `Like a video (login and write permission required).`,
@@ -32,7 +34,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 				return err
 			}
 
-			if err := client.LikeVideo(bvid, false); err != nil {
+			if err := client.LikeVideo(bvid, undo); err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to like: %v", err), format)
 				return err
 			}
@@ -41,10 +43,17 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 				return output.EmitSuccess(ActionResult{Success: true, Action: "like"}, format)
 			}
 
-			fmt.Println("✅ Liked")
+			if undo {
+				fmt.Println("✅ Unliked")
+			} else {
+				fmt.Println("✅ Liked")
+			}
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVar(&undo, "undo", false, "Unlike the video")
+	return cmd
 }
 
 // NewCoinCmd creates the coin command.

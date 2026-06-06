@@ -116,6 +116,53 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	return result, nil
 }
 
+func (c *Client) post(path string, params url.Values) (map[string]interface{}, error) {
+	if c.credential != nil && c.credential.BiliJct != "" {
+		params.Set("csrf", c.credential.BiliJct)
+	}
+
+	body := params.Encode()
+	req, err := http.NewRequest("POST", baseURL+path, strings.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header = c.buildHeaders()
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("network request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read response: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
+	}
+
+	code := getInt(result, "code")
+	if code != 0 {
+		msg := getString(result, "message")
+		if code == -101 || code == -111 {
+			return nil, fmt.Errorf("not_authenticated: %s", msg)
+		}
+		if code == -404 || code == 62002 || code == 62004 {
+			return nil, fmt.Errorf("not_found: %s", msg)
+		}
+		if code == -412 || code == 412 {
+			return nil, fmt.Errorf("rate_limited: %s", msg)
+		}
+		return nil, fmt.Errorf("API error [%d]: %s", code, msg)
+	}
+
+	return result, nil
+}
+
 // GetVideoInfo fetches video metadata.
 func (c *Client) GetVideoInfo(bvid string) (*commands.VideoInfo, error) {
 	params := url.Values{}
@@ -341,11 +388,20 @@ func (c *Client) GetRelatedVideos(bvid string) ([]commands.VideoInfo, error) {
 }
 
 // SearchVideo searches for videos by keyword.
-func (c *Client) SearchVideo(keyword string, page int) ([]commands.SearchVideoResult, error) {
+func (c *Client) SearchVideo(keyword string, page int, order string, duration int, tid int) ([]commands.SearchVideoResult, error) {
 	params := url.Values{}
 	params.Set("keyword", keyword)
 	params.Set("search_type", "video")
 	params.Set("page", strconv.Itoa(page))
+	if order != "" {
+		params.Set("order", order)
+	}
+	if duration > 0 {
+		params.Set("duration", strconv.Itoa(duration))
+	}
+	if tid > 0 {
+		params.Set("tid", strconv.Itoa(tid))
+	}
 
 	data, err := c.wbiGet("/x/web-interface/wbi/search/type", params)
 	if err != nil {
@@ -423,14 +479,14 @@ func (c *Client) GetUserInfo(uid int) (*commands.UserInfo, error) {
 }
 
 // GetUserVideos fetches a user's latest videos.
-func (c *Client) GetUserVideos(uid int, count int) ([]commands.VideoInfo, error) {
+func (c *Client) GetUserVideos(uid int, count int, order string, tid int, keyword string) ([]commands.VideoInfo, error) {
 	params := url.Values{}
 	params.Set("mid", strconv.Itoa(uid))
 	params.Set("ps", strconv.Itoa(min(count, 50)))
 	params.Set("pn", "1")
-	params.Set("order", "pubdate")
-	params.Set("tid", "0")
-	params.Set("keyword", "")
+	params.Set("order", order)
+	params.Set("tid", strconv.Itoa(tid))
+	params.Set("keyword", keyword)
 
 	data, err := c.wbiGet("/x/space/wbi/arc/search", params)
 	if err != nil {
@@ -499,8 +555,7 @@ func (c *Client) GetHotVideos(page int, count int) ([]commands.VideoInfo, error)
 }
 
 // GetRankVideos fetches ranking videos.
-func (c *Client) GetRankVideos(day int) ([]commands.VideoInfo, error) {
-	rid := 0 // all
+func (c *Client) GetRankVideos(rid int, day int, typeStr string) ([]commands.VideoInfo, error) {
 	params := url.Values{}
 	params.Set("rid", strconv.Itoa(rid))
 	params.Set("type", "all")
@@ -537,7 +592,7 @@ func (c *Client) GetRankVideos(day int) ([]commands.VideoInfo, error) {
 }
 
 // GetFavoriteList fetches favorite folders.
-func (c *Client) GetFavoriteList(uid int) ([]commands.FavoriteFolder, error) {
+func (c *Client) GetFavoriteList(uid int, page int) ([]commands.FavoriteFolder, error) {
 	params := url.Values{}
 	params.Set("up_mid", strconv.Itoa(uid))
 
@@ -595,7 +650,7 @@ func (c *Client) GetFollowingList(uid int, page int) ([]commands.FollowingUser, 
 	params := url.Values{}
 	params.Set("vmid", strconv.Itoa(uid))
 	params.Set("pn", strconv.Itoa(page))
-	params.Set("ps", "20")
+	params.Set("ps", "50")
 
 	data, err := c.get("/x/relation/followings", params)
 	if err != nil {
@@ -706,14 +761,13 @@ func (c *Client) GetDynamicFeed(offset string) ([]commands.DynamicItem, error) {
 func (c *Client) LikeVideo(bvid string, undo bool) error {
 	params := url.Values{}
 	params.Set("bvid", bvid)
-	params.Set("type", "1")
 	if undo {
-		params.Set("act", "2")
+		params.Set("like", "2")
 	} else {
-		params.Set("act", "1")
+		params.Set("like", "1")
 	}
 
-	_, err := c.get("/x/web-interface/archive/like", params)
+	_, err := c.post("/x/web-interface/archive/like", params)
 	return err
 }
 
@@ -724,7 +778,7 @@ func (c *Client) CoinVideo(bvid string, num int) error {
 	params.Set("multiply", strconv.Itoa(num))
 	params.Set("select_like", "1")
 
-	_, err := c.get("/x/web-interface/coin/add", params)
+	_, err := c.post("/x/web-interface/coin/add", params)
 	return err
 }
 
@@ -733,7 +787,7 @@ func (c *Client) TripleVideo(bvid string) error {
 	params := url.Values{}
 	params.Set("bvid", bvid)
 
-	_, err := c.get("/x/web-interface/archive/like/triple", params)
+	_, err := c.post("/x/web-interface/archive/like/triple", params)
 	return err
 }
 
@@ -744,7 +798,7 @@ func (c *Client) UnfollowUser(uid int) error {
 	params.Set("act", "2")
 	params.Set("re_src", "11")
 
-	_, err := c.get("/x/relation/modify", params)
+	_, err := c.post("/x/relation/modify", params)
 	return err
 }
 
