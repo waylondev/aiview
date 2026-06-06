@@ -1,0 +1,87 @@
+package bilibili
+
+import (
+	"github.com/jackwener/aiview/internal/config"
+	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/bilibili/commands"
+	"github.com/spf13/cobra"
+)
+
+// BilibiliPlatform implements the platform.Platform interface for Bilibili.
+type BilibiliPlatform struct {
+	authStore *AuthStore
+}
+
+// NewPlatform creates a new Bilibili platform instance.
+func NewPlatform() *BilibiliPlatform {
+	return &BilibiliPlatform{
+		authStore: NewAuthStore(),
+	}
+}
+
+// Name returns the platform identifier.
+func (p *BilibiliPlatform) Name() string {
+	return "bilibili"
+}
+
+// NewClient creates a new Bilibili API client.
+func (p *BilibiliPlatform) NewClient(cfg *config.Config) (platform.Client, error) {
+	timeout := cfg.Platforms.Bilibili.Timeout
+	if timeout <= 0 {
+		timeout = 30
+	}
+	cookies := cfg.Platforms.Bilibili.Cookies
+	cred := p.authStore.GetCredentialOrNil()
+	return NewClient(timeout, cookies, cred), nil
+}
+
+// Commands returns all Bilibili commands.
+func (p *BilibiliPlatform) Commands() []*cobra.Command {
+	// Create a client factory function
+	getClient := func() commands.Client {
+		cfg, _ := config.LoadConfig()
+		timeout := 30
+		if cfg != nil {
+			timeout = cfg.Platforms.Bilibili.Timeout
+		}
+		cookies := ""
+		if cfg != nil {
+			cookies = cfg.Platforms.Bilibili.Cookies
+		}
+		cred := p.authStore.GetCredentialOrNil()
+		return NewClient(timeout, cookies, cred)
+	}
+
+	bilibiliCmd := &cobra.Command{
+		Use:   "bilibili",
+		Short: "Bilibili (哔哩哔哩) 平台命令",
+		Long:  `Bilibili 平台相关命令，包括视频、搜索、用户、收藏、互动等功能。`,
+	}
+
+	bilibiliCmd.AddCommand(commands.NewLoginCmd(p.authStore))
+	bilibiliCmd.AddCommand(commands.NewLogoutCmd(p.authStore))
+	bilibiliCmd.AddCommand(commands.NewStatusCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewWhoamiCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewVideoCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewSearchCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewUserCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewUserVideosCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewFavoritesCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewFollowingCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewHistoryCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewWatchLaterCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewHotCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewRankCmd(getClient))
+	bilibiliCmd.AddCommand(commands.NewFeedCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewLikeCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewCoinCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewTripleCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewUnfollowCmd(p.authStore, getClient))
+	bilibiliCmd.AddCommand(commands.NewAudioCmd(getClient))
+
+	return []*cobra.Command{bilibiliCmd}
+}
+
+func init() {
+	platform.Register(NewPlatform())
+}
