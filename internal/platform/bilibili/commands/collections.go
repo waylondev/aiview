@@ -9,7 +9,9 @@ import (
 
 // NewFavoritesCmd creates the favorites command.
 func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
-	return &cobra.Command{
+	var max int
+
+	cmd := &cobra.Command{
 		Use:   "favorites",
 		Short: "View favorites",
 		Long:  `View favorite folders (login required).`,
@@ -36,6 +38,10 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return err
 			}
 
+			if max > 0 && max < len(folders) {
+				folders = folders[:max]
+			}
+
 			if format == output.FormatJSON || format == output.FormatYAML {
 				return output.EmitSuccess(map[string]interface{}{"items": folders}, format)
 			}
@@ -47,11 +53,16 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 			return nil
 		},
 	}
+
+	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of folders to show")
+	return cmd
 }
 
 // NewFollowingCmd creates the following command.
 func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
-	return &cobra.Command{
+	var max int
+
+	cmd := &cobra.Command{
 		Use:   "following",
 		Short: "View following",
 		Long:  `View following list (login required).`,
@@ -78,6 +89,10 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return err
 			}
 
+			if max > 0 && max < len(users) {
+				users = users[:max]
+			}
+
 			if format == output.FormatJSON || format == output.FormatYAML {
 				return output.EmitSuccess(map[string]interface{}{"items": users}, format)
 			}
@@ -92,11 +107,16 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 			return nil
 		},
 	}
+
+	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of users to show")
+	return cmd
 }
 
 // NewHistoryCmd creates the history command.
 func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
-	return &cobra.Command{
+	var max int
+
+	cmd := &cobra.Command{
 		Use:   "history",
 		Short: "View history",
 		Long:  `View watch history (login required).`,
@@ -111,7 +131,11 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 			}
 			_ = cred
 
-			items, err := client.GetWatchHistory(1, 20)
+			count := 20
+			if max > 0 {
+				count = max
+			}
+			items, err := client.GetWatchHistory(1, count)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get watch history: %v", err), format)
 				return err
@@ -129,11 +153,16 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 			return nil
 		},
 	}
+
+	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of history items to show")
+	return cmd
 }
 
 // NewWatchLaterCmd creates the watch-later command.
 func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
-	return &cobra.Command{
+	var max int
+
+	cmd := &cobra.Command{
 		Use:   "watch-later",
 		Short: "View watch later",
 		Long:  `View watch later list (login required).`,
@@ -154,6 +183,10 @@ func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Co
 				return err
 			}
 
+			if max > 0 && max < len(items) {
+				items = items[:max]
+			}
+
 			if format == output.FormatJSON || format == output.FormatYAML {
 				return output.EmitSuccess(map[string]interface{}{"items": items}, format)
 			}
@@ -166,4 +199,7 @@ func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Co
 			return nil
 		},
 	}
+
+	cmd.Flags().IntVarP(&max, "max", "n", 0, "Maximum number of items to show")
+	return cmd
 }
