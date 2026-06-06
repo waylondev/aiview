@@ -26,30 +26,37 @@ func (p *BilibiliPlatform) Name() string {
 
 // NewClient creates a new Bilibili API client.
 func (p *BilibiliPlatform) NewClient(cfg *config.Config) (platform.Client, error) {
-	timeout := cfg.Platforms.Bilibili.Timeout
-	if timeout <= 0 {
-		timeout = 30
-	}
-	cookies := cfg.Platforms.Bilibili.Cookies
+	return p.buildClient(), nil
+}
+
+// buildClient creates a client using the current credential.
+func (p *BilibiliPlatform) buildClient() *Client {
 	cred := p.authStore.GetCredentialOrNil()
-	return NewClient(timeout, cookies, cred), nil
+	return NewClient(30, BuildCookieString(cred), cred)
 }
 
 // Commands returns all Bilibili commands.
 func (p *BilibiliPlatform) Commands() []*cobra.Command {
-	// Create a client factory function
+	// Wire up QR login functions
+	commands.SetQRLoginFuncs(
+		func() (*commands.QRLoginSession, error) {
+			sess, err := GenerateQRCode()
+			if err != nil {
+				return nil, err
+			}
+			return &commands.QRLoginSession{
+				QRCodeKey: sess.QRCodeKey,
+				QRCodeURL: sess.QRCodeURL,
+			}, nil
+		},
+		func(key string) (int, *commands.Credential, error) {
+			state, cred, err := PollQRCode(key)
+			return int(state), cred, err
+		},
+	)
+
 	getClient := func() commands.Client {
-		cfg, _ := config.LoadConfig()
-		timeout := 30
-		if cfg != nil {
-			timeout = cfg.Platforms.Bilibili.Timeout
-		}
-		cookies := ""
-		if cfg != nil {
-			cookies = cfg.Platforms.Bilibili.Cookies
-		}
-		cred := p.authStore.GetCredentialOrNil()
-		return NewClient(timeout, cookies, cred)
+		return p.buildClient()
 	}
 
 	bilibiliCmd := &cobra.Command{
@@ -58,7 +65,7 @@ func (p *BilibiliPlatform) Commands() []*cobra.Command {
 		Long:  `Bilibili 平台相关命令，包括视频、搜索、用户、收藏、互动等功能。`,
 	}
 
-	bilibiliCmd.AddCommand(commands.NewLoginCmd(p.authStore))
+	bilibiliCmd.AddCommand(commands.NewLoginCmd(p.authStore, getClient))
 	bilibiliCmd.AddCommand(commands.NewLogoutCmd(p.authStore))
 	bilibiliCmd.AddCommand(commands.NewStatusCmd(p.authStore, getClient))
 	bilibiliCmd.AddCommand(commands.NewWhoamiCmd(p.authStore, getClient))

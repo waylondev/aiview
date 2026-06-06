@@ -179,11 +179,18 @@ type (
 	}
 )
 
+// QRLoginSession holds QR login session data.
+type QRLoginSession struct {
+	QRCodeKey string
+	QRCodeURL string
+}
+
 // AuthProvider is the interface for credential management.
 type AuthProvider interface {
 	GetCredential() (*Credential, error)
 	GetCredentialOrNil() *Credential
 	RequireCredential(requireWrite bool) (*Credential, error)
+	Save(c *Credential) error
 	Clear() error
 }
 

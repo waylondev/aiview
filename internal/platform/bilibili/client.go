@@ -57,7 +57,13 @@ func ExtractBVID(urlOrBvid string) (string, error) {
 func (c *Client) buildHeaders() http.Header {
 	h := http.Header{}
 	h.Set("User-Agent", userAgent)
+	h.Set("Origin", "https://www.bilibili.com")
 	h.Set("Referer", "https://www.bilibili.com")
+	h.Set("Accept", "application/json, text/plain, */*")
+	h.Set("Accept-Language", "zh-CN,zh;q=0.9")
+	h.Set("sec-ch-ua", "\"Chromium\";v=\"133\", \"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\"")
+	h.Set("sec-ch-ua-mobile", "?0")
+	h.Set("sec-ch-ua-platform", "\"Windows\"")
 	if c.cookies != "" {
 		h.Set("Cookie", c.cookies)
 	}
@@ -321,6 +327,7 @@ func (c *Client) GetRelatedVideos(bvid string) ([]commands.VideoInfo, error) {
 			Title:       getString(m, "title"),
 			Duration:    getInt(m, "duration"),
 			DurationStr: formatDuration(getInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
 			Owner: commands.OwnerInfo{
 				MID:  getInt(owner, "mid"),
 				Name: getString(owner, "name"),
@@ -421,8 +428,11 @@ func (c *Client) GetUserVideos(uid int, count int) ([]commands.VideoInfo, error)
 	params.Set("mid", strconv.Itoa(uid))
 	params.Set("ps", strconv.Itoa(min(count, 50)))
 	params.Set("pn", "1")
+	params.Set("order", "pubdate")
+	params.Set("tid", "0")
+	params.Set("keyword", "")
 
-	data, err := c.get("/x/space/wbi/arc/search", params)
+	data, err := c.wbiGet("/x/space/wbi/arc/search", params)
 	if err != nil {
 		return nil, err
 	}
@@ -439,6 +449,7 @@ func (c *Client) GetUserVideos(uid int, count int) ([]commands.VideoInfo, error)
 			Title:       getString(m, "title"),
 			Duration:    getInt(m, "length"),
 			DurationStr: formatDuration(getInt(m, "length")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
 			Stats: commands.VideoStats{
 				View: getInt(m, "play"),
 			},
@@ -474,6 +485,7 @@ func (c *Client) GetHotVideos(page int, count int) ([]commands.VideoInfo, error)
 			Title:       getString(m, "title"),
 			Duration:    getInt(m, "duration"),
 			DurationStr: formatDuration(getInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
 			Owner: commands.OwnerInfo{
 				MID:  getInt(owner, "mid"),
 				Name: getString(owner, "name"),
@@ -511,6 +523,7 @@ func (c *Client) GetRankVideos(day int) ([]commands.VideoInfo, error) {
 			Title:       getString(m, "title"),
 			Duration:    getInt(m, "duration"),
 			DurationStr: formatDuration(getInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
 			Owner: commands.OwnerInfo{
 				MID:  getInt(owner, "mid"),
 				Name: getString(owner, "name"),
