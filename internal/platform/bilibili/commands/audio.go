@@ -20,9 +20,9 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "audio <BV号>",
-		Short: "下载视频音频",
-		Long:  `下载 Bilibili 视频的音频流。`,
+		Use:   "audio <BV>",
+		Short: "Download video audio",
+		Long:  `Download the audio stream of a Bilibili video.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -36,7 +36,7 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 
 			audioURL, err := client.GetAudioURL(bvid)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取音频流失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get audio stream: %v", err), format)
 				return err
 			}
 
@@ -45,7 +45,7 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 			}
 
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
-				output.EmitError("internal_error", fmt.Sprintf("创建目录失败: %v", err), format)
+				output.EmitError("internal_error", fmt.Sprintf("Failed to create directory: %v", err), format)
 				return err
 			}
 
@@ -54,7 +54,7 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 			// Download audio
 			req, err := http.NewRequest("GET", audioURL, nil)
 			if err != nil {
-				output.EmitError("network_error", fmt.Sprintf("创建请求失败: %v", err), format)
+				output.EmitError("network_error", fmt.Sprintf("Failed to create request: %v", err), format)
 				return err
 			}
 			req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -62,21 +62,21 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
-				output.EmitError("network_error", fmt.Sprintf("下载失败: %v", err), format)
+				output.EmitError("network_error", fmt.Sprintf("Download failed: %v", err), format)
 				return err
 			}
 			defer resp.Body.Close()
 
 			f, err := os.Create(outputPath)
 			if err != nil {
-				output.EmitError("internal_error", fmt.Sprintf("创建文件失败: %v", err), format)
+				output.EmitError("internal_error", fmt.Sprintf("Failed to create file: %v", err), format)
 				return err
 			}
 			defer f.Close()
 
 			written, err := io.Copy(f, resp.Body)
 			if err != nil {
-				output.EmitError("network_error", fmt.Sprintf("下载失败: %v", err), format)
+				output.EmitError("network_error", fmt.Sprintf("Download failed: %v", err), format)
 				return err
 			}
 
@@ -87,15 +87,15 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 				}, format)
 			}
 
-			fmt.Printf("✅ 音频已下载到: %s\n", outputPath)
-			fmt.Printf("   大小: %d bytes\n", written)
+			fmt.Printf("✅ Audio downloaded to: %s\n", outputPath)
+			fmt.Printf("   Size: %d bytes\n", written)
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&outputDir, "output", "o", "", "输出目录")
-	cmd.Flags().BoolVar(&noSplit, "no-split", false, "不分割音频")
-	cmd.Flags().IntVar(&segment, "segment", 25, "每个分段的秒数")
+	cmd.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory")
+	cmd.Flags().BoolVar(&noSplit, "no-split", false, "Do not split audio")
+	cmd.Flags().IntVar(&segment, "segment", 25, "Seconds per segment")
 
 	return cmd
 }

@@ -240,7 +240,7 @@ type BVIDError struct {
 }
 
 func (e *BVIDError) Error() string {
-	return "无法提取 BV 号: " + e.Input
+	return "Failed to extract BV ID: " + e.Input
 }
 
 // GetOutputFormat extracts the output format from cobra command flags.

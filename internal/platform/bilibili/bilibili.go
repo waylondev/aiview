@@ -61,8 +61,8 @@ func (p *BilibiliPlatform) Commands() []*cobra.Command {
 
 	bilibiliCmd := &cobra.Command{
 		Use:   "bilibili",
-		Short: "Bilibili (哔哩哔哩) 平台命令",
-		Long:  `Bilibili 平台相关命令，包括视频、搜索、用户、收藏、互动等功能。`,
+		Short: "Bilibili platform commands",
+		Long:  `Bilibili platform commands, including video, search, user, favorites, interaction and more.`,
 	}
 
 	bilibiliCmd.AddCommand(commands.NewLoginCmd(p.authStore, getClient))

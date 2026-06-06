@@ -51,7 +51,7 @@ func ExtractBVID(urlOrBvid string) (string, error) {
 	if match != "" {
 		return match, nil
 	}
-	return "", fmt.Errorf("无法提取 BV 号: %s", urlOrBvid)
+	return "", fmt.Errorf("failed to extract BV ID: %s", urlOrBvid)
 }
 
 func (c *Client) buildHeaders() http.Header {
@@ -78,24 +78,24 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("创建请求失败: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header = c.buildHeaders()
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("网络请求失败: %w", err)
+		return nil, fmt.Errorf("network request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取响应失败: %w", err)
+		return nil, fmt.Errorf("Failed to read response: %w", err)
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("解析响应失败: %w", err)
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	code := getInt(result, "code")
@@ -110,7 +110,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 		if code == -412 || code == 412 {
 			return nil, fmt.Errorf("rate_limited: %s", msg)
 		}
-		return nil, fmt.Errorf("API 错误 [%d]: %s", code, msg)
+		return nil, fmt.Errorf("API error [%d]: %s", code, msg)
 	}
 
 	return result, nil
@@ -505,7 +505,7 @@ func (c *Client) GetRankVideos(day int) ([]commands.VideoInfo, error) {
 	params.Set("rid", strconv.Itoa(rid))
 	params.Set("type", "all")
 
-	data, err := c.get("/x/web-interface/ranking/v2", params)
+	data, err := c.wbiGet("/x/web-interface/ranking/v2", params)
 	if err != nil {
 		return nil, err
 	}
@@ -757,7 +757,7 @@ func (c *Client) GetSelfInfo() (*commands.UserInfo, error) {
 
 	d := getMap(data, "data")
 	if !getBool(d, "isLogin") {
-		return nil, fmt.Errorf("not_authenticated: 未登录")
+		return nil, fmt.Errorf("not_authenticated: not logged in")
 	}
 
 	return &commands.UserInfo{
@@ -792,7 +792,7 @@ func (c *Client) GetAudioURL(bvid string) (string, error) {
 	audio := getSlice(dash, "audio")
 
 	if len(audio) == 0 {
-		return "", fmt.Errorf("not_found: 无法获取音频流")
+		return "", fmt.Errorf("not_found: unable to get audio stream")
 	}
 
 	// Get the best quality audio

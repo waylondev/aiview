@@ -11,28 +11,28 @@ import (
 func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "favorites",
-		Short: "查看收藏夹",
-		Long:  `查看收藏夹列表（需要登录）。`,
+		Short: "View favorites",
+		Long:  `View favorite folders (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
 				return err
 			}
 			_ = cred
 
 			info, err := client.GetSelfInfo()
 			if err != nil {
-				output.EmitError("not_authenticated", fmt.Sprintf("获取用户信息失败: %v", err), format)
+				output.EmitError("not_authenticated", fmt.Sprintf("Failed to get user info: %v", err), format)
 				return err
 			}
 
 			folders, err := client.GetFavoriteList(info.MID)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取收藏夹失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get favorites: %v", err), format)
 				return err
 			}
 
@@ -40,9 +40,9 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return output.EmitSuccess(map[string]interface{}{"items": folders}, format)
 			}
 
-			fmt.Println("📁 收藏夹:")
+			fmt.Println("📁 Favorite Folders:")
 			for _, f := range folders {
-				fmt.Printf("  [%d] %s (%d 个视频)\n", f.ID, f.Title, f.MediaCount)
+				fmt.Printf("  [%d] %s (%d videos)\n", f.ID, f.Title, f.MediaCount)
 			}
 			return nil
 		},
@@ -53,28 +53,28 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "following",
-		Short: "查看关注列表",
-		Long:  `查看关注列表（需要登录）。`,
+		Short: "View following",
+		Long:  `View following list (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
 				return err
 			}
 			_ = cred
 
 			info, err := client.GetSelfInfo()
 			if err != nil {
-				output.EmitError("not_authenticated", fmt.Sprintf("获取用户信息失败: %v", err), format)
+				output.EmitError("not_authenticated", fmt.Sprintf("Failed to get user info: %v", err), format)
 				return err
 			}
 
 			users, err := client.GetFollowingList(info.MID, 1)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取关注列表失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get following list: %v", err), format)
 				return err
 			}
 
@@ -82,7 +82,7 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 				return output.EmitSuccess(map[string]interface{}{"items": users}, format)
 			}
 
-			fmt.Println("👥 关注列表:")
+			fmt.Println("👥 Following:")
 			for _, u := range users {
 				fmt.Printf("  %s (UID: %d)\n", u.Name, u.MID)
 				if u.Sign != "" {
@@ -98,22 +98,22 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "history",
-		Short: "查看观看历史",
-		Long:  `查看观看历史（需要登录）。`,
+		Short: "View history",
+		Long:  `View watch history (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
 				return err
 			}
 			_ = cred
 
 			items, err := client.GetWatchHistory(1, 20)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取观看历史失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get watch history: %v", err), format)
 				return err
 			}
 
@@ -121,10 +121,10 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 				return output.EmitSuccess(map[string]interface{}{"items": items}, format)
 			}
 
-			fmt.Println("📺 观看历史:")
+			fmt.Println("📺 Watch History:")
 			for i, h := range items {
 				fmt.Printf("  %d. [%s] %s\n", i+1, h.BVID, h.Title)
-				fmt.Printf("     UP主: %s\n", h.Author)
+				fmt.Printf("     Uploader: %s\n", h.Author)
 			}
 			return nil
 		},
@@ -135,22 +135,22 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "watch-later",
-		Short: "查看稍后再看",
-		Long:  `查看稍后再看列表（需要登录）。`,
+		Short: "View watch later",
+		Long:  `View watch later list (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
 				return err
 			}
 			_ = cred
 
 			items, err := client.GetWatchLater()
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取稍后再看失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get watch later list: %v", err), format)
 				return err
 			}
 
@@ -158,10 +158,10 @@ func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Co
 				return output.EmitSuccess(map[string]interface{}{"items": items}, format)
 			}
 
-			fmt.Println("⏰ 稍后再看:")
+			fmt.Println("⏰ Watch Later:")
 			for i, w := range items {
 				fmt.Printf("  %d. [%s] %s\n", i+1, w.BVID, w.Title)
-				fmt.Printf("     UP主: %s  时长: %s\n", w.Author, w.Duration)
+				fmt.Printf("     Uploader: %s  Duration: %s\n", w.Author, w.Duration)
 			}
 			return nil
 		},

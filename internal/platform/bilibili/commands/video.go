@@ -17,9 +17,9 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "video <BV号或URL>",
-		Short: "查看视频详情",
-		Long:  `查看 Bilibili 视频详情，包括标题、UP主、播放量等。`,
+		Use:   "video <BV or URL>",
+		Short: "View video details",
+		Long:  `View Bilibili video details, including title, uploader, view count, etc.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -33,7 +33,7 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 
 			info, err := client.GetVideoInfo(bvid)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("获取视频信息失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to get video info: %v", err), format)
 				return err
 			}
 
@@ -48,7 +48,7 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 				if err == nil && sub != nil {
 					payload.Subtitle = *sub
 				} else {
-					payload.Warnings = append(payload.Warnings, Warning{Code: "subtitle_unavailable", Message: "获取字幕失败"})
+					payload.Warnings = append(payload.Warnings, Warning{Code: "subtitle_unavailable", Message: "Failed to get subtitles"})
 				}
 			}
 
@@ -58,7 +58,7 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 				if err == nil {
 					payload.AISummary = summary
 				} else {
-					payload.Warnings = append(payload.Warnings, Warning{Code: "ai_summary_unavailable", Message: "获取 AI 总结失败"})
+					payload.Warnings = append(payload.Warnings, Warning{Code: "ai_summary_unavailable", Message: "Failed to get AI summary"})
 				}
 			}
 
@@ -68,7 +68,7 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 				if err == nil {
 					payload.Comments = cm
 				} else {
-					payload.Warnings = append(payload.Warnings, Warning{Code: "comments_unavailable", Message: "获取评论失败"})
+					payload.Warnings = append(payload.Warnings, Warning{Code: "comments_unavailable", Message: "Failed to get comments"})
 				}
 			}
 
@@ -78,7 +78,7 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 				if err == nil {
 					payload.Related = rel
 				} else {
-					payload.Warnings = append(payload.Warnings, Warning{Code: "related_unavailable", Message: "获取相关推荐失败"})
+					payload.Warnings = append(payload.Warnings, Warning{Code: "related_unavailable", Message: "Failed to get related videos"})
 				}
 			}
 
@@ -89,36 +89,36 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 
 			// Table output
 			fmt.Printf("📺 %s\n\n", info.Title)
-			fmt.Printf("  BV号:   %s\n", bvid)
-			fmt.Printf("  UP主:   %s (UID: %d)\n", info.Owner.Name, info.Owner.MID)
-			fmt.Printf("  时长:   %s\n", info.DurationStr)
-			fmt.Printf("  播放:   %s\n", output.FormatCount(info.Stats.View))
-			fmt.Printf("  弹幕:   %s\n", output.FormatCount(info.Stats.Danmaku))
-			fmt.Printf("  点赞:   %s\n", output.FormatCount(info.Stats.Like))
-			fmt.Printf("  投币:   %s\n", output.FormatCount(info.Stats.Coin))
-			fmt.Printf("  收藏:   %s\n", output.FormatCount(info.Stats.Favorite))
-			fmt.Printf("  分享:   %s\n", output.FormatCount(info.Stats.Share))
-			fmt.Printf("  链接:   %s\n", info.URL)
+			fmt.Printf("  BV:      %s\n", bvid)
+			fmt.Printf("  Uploader: %s (UID: %d)\n", info.Owner.Name, info.Owner.MID)
+			fmt.Printf("  Duration: %s\n", info.DurationStr)
+			fmt.Printf("  Views:   %s\n", output.FormatCount(info.Stats.View))
+			fmt.Printf("  Danmaku: %s\n", output.FormatCount(info.Stats.Danmaku))
+			fmt.Printf("  Likes:   %s\n", output.FormatCount(info.Stats.Like))
+			fmt.Printf("  Coins:   %s\n", output.FormatCount(info.Stats.Coin))
+			fmt.Printf("  Favs:    %s\n", output.FormatCount(info.Stats.Favorite))
+			fmt.Printf("  Shares:  %s\n", output.FormatCount(info.Stats.Share))
+			fmt.Printf("  URL:     %s\n", info.URL)
 			if info.Description != "" {
 				desc := info.Description
 				if len(desc) > 200 {
 					desc = desc[:200]
 				}
-				fmt.Printf("  简介:   %s\n", desc)
+				fmt.Printf("  Desc:    %s\n", desc)
 			}
 
 			if subtitle && payload.Subtitle.Available {
-				fmt.Printf("\n📝 字幕内容:\n\n")
+				fmt.Printf("\n📝 Subtitle:\n\n")
 				fmt.Println(payload.Subtitle.Text)
 			}
 
 			if ai && payload.AISummary != "" {
-				fmt.Printf("\n🤖 AI 总结:\n\n")
+				fmt.Printf("\n🤖 AI Summary:\n\n")
 				fmt.Println(payload.AISummary)
 			}
 
 			if comments && len(payload.Comments) > 0 {
-				fmt.Printf("\n💬 热门评论:\n\n")
+				fmt.Printf("\n💬 Top Comments:\n\n")
 				for _, c := range payload.Comments[:min(10, len(payload.Comments))] {
 					fmt.Printf("  %s (👍 %d)\n", c.Author.Name, c.Like)
 					msg := c.Message
@@ -130,9 +130,9 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 			}
 
 			if related && len(payload.Related) > 0 {
-				fmt.Printf("\n📎 相关推荐:\n\n")
+				fmt.Printf("\n📎 Related Videos:\n\n")
 				for i, r := range payload.Related[:min(10, len(payload.Related))] {
-					fmt.Printf("  %d. [%s] %s (UP: %s, 播放: %s)\n",
+					fmt.Printf("  %d. [%s] %s (Uploader: %s, Views: %s)\n",
 						i+1, r.BVID, truncate(r.Title, 40), r.Owner.Name, output.FormatCount(r.Stats.View))
 				}
 			}
@@ -141,10 +141,10 @@ func NewVideoCmd(getClient func() Client) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&subtitle, "subtitle", "s", false, "显示字幕内容")
-	cmd.Flags().BoolVar(&ai, "ai", false, "显示 AI 总结")
-	cmd.Flags().BoolVarP(&comments, "comments", "c", false, "显示评论")
-	cmd.Flags().BoolVarP(&related, "related", "r", false, "显示相关推荐视频")
+	cmd.Flags().BoolVarP(&subtitle, "subtitle", "s", false, "Show subtitle content")
+	cmd.Flags().BoolVar(&ai, "ai", false, "Show AI summary")
+	cmd.Flags().BoolVarP(&comments, "comments", "c", false, "Show comments")
+	cmd.Flags().BoolVarP(&related, "related", "r", false, "Show related video recommendations")
 
 	return cmd
 }

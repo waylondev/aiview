@@ -31,7 +31,7 @@ type QRLoginSession struct {
 func GenerateQRCode() (*QRLoginSession, error) {
 	req, err := http.NewRequest("GET", "https://passport.bilibili.com/x/passport-login/web/qrcode/generate", nil)
 	if err != nil {
-		return nil, fmt.Errorf("生成二维码请求失败: %w", err)
+		return nil, fmt.Errorf("Failed to create QR code request: %w", err)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
@@ -39,23 +39,23 @@ func GenerateQRCode() (*QRLoginSession, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("生成二维码网络错误: %w", err)
+		return nil, fmt.Errorf("Network error while generating QR code: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取二维码响应失败: %w", err)
+		return nil, fmt.Errorf("Failed to read QR code response: %w", err)
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("解析二维码响应失败: %w", err)
+		return nil, fmt.Errorf("Failed to parse QR code response: %w", err)
 	}
 
 	code := getInt(result, "code")
 	if code != 0 {
-		return nil, fmt.Errorf("生成二维码失败 [%d]: %s", code, getString(result, "message"))
+		return nil, fmt.Errorf("Failed to generate QR code [%d]: %s", code, getString(result, "message"))
 	}
 
 	data := getMap(result, "data")
@@ -69,7 +69,7 @@ func GenerateQRCode() (*QRLoginSession, error) {
 func PollQRCode(qrcodeKey string) (QRLoginState, *commands.Credential, error) {
 	req, err := http.NewRequest("GET", "https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key="+qrcodeKey, nil)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("轮询二维码状态失败: %w", err)
+		return QRLoginPending, nil, fmt.Errorf("Failed to poll QR code status: %w", err)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
@@ -77,18 +77,18 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *commands.Credential, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("轮询二维码网络错误: %w", err)
+		return QRLoginPending, nil, fmt.Errorf("Network error while polling QR code: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("读取轮询响应失败: %w", err)
+		return QRLoginPending, nil, fmt.Errorf("Failed to read poll response: %w", err)
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return QRLoginPending, nil, fmt.Errorf("解析轮询响应失败: %w", err)
+		return QRLoginPending, nil, fmt.Errorf("Failed to parse poll response: %w", err)
 	}
 
 	data := getMap(result, "data")
@@ -107,7 +107,7 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *commands.Credential, error) {
 		return QRLoginPending, nil, nil
 	default:
 		msg := getString(data, "message")
-		return QRLoginPending, nil, fmt.Errorf("二维码登录异常 [%d]: %s", code, msg)
+		return QRLoginPending, nil, fmt.Errorf("QR code login error [%d]: %s", code, msg)
 	}
 }
 

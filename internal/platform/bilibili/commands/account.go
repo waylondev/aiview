@@ -37,13 +37,13 @@ func NewLoginCmd(authStore AuthProvider, getClient func() Client) *cobra.Command
 
 	cmd := &cobra.Command{
 		Use:   "login",
-		Short: "登录 Bilibili 账号",
-		Long: `登录 Bilibili 账号。
+		Short: "Login to Bilibili",
+		Long: `Login to Bilibili.
 
-支持三种方式:
-  1. 无参数: QR 码扫码登录
-  2. --sessdata: 直接传入 SESSDATA Cookie
-  3. --sessdata + --bili-jct: 传入完整凭证（支持写操作）`,
+Three methods supported:
+  1. No arguments: QR code scan login
+  2. --sessdata: Pass SESSDATA Cookie directly
+  3. --sessdata + --bili-jct: Pass full credential (supports write operations)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := GetOutputFormat(cmd)
 
@@ -55,85 +55,91 @@ func NewLoginCmd(authStore AuthProvider, getClient func() Client) *cobra.Command
 					SavedAt:  time.Now().Unix(),
 				}
 				if err := authStore.Save(cred); err != nil {
-					output.EmitError("internal_error", fmt.Sprintf("保存凭证失败: %v", err), format)
+					output.EmitError("internal_error", fmt.Sprintf("Failed to save credential: %v", err), format)
 					return err
 				}
-				fmt.Println("✅ 已通过 Cookie 登录")
+				fmt.Println("✅ Logged in via Cookie")
 				return nil
 			}
 
 			// QR code login
-			fmt.Println("📱 正在生成二维码...")
+			fmt.Println("📱 Generating QR code...")
 			session, err := qrGenerate()
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("生成二维码失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to generate QR code: %v", err), format)
 				return err
 			}
 
-			fmt.Println("\n请使用 Bilibili App 扫描以下二维码登录:")
+			fmt.Println("\nScan the QR code with the Bilibili App:")
 			fmt.Printf("  %s\n\n", session.QRCodeURL)
-			fmt.Println("⭐ 扫码后请在手机上确认登录...")
+			fmt.Println("⭐ Confirm login on your phone after scanning...")
 
 			// Poll QR code state
 			for i := 0; i < 60; i++ {
 				state, cred, err := qrPoll(session.QRCodeKey)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "  ⚠️ 轮询错误: %v\n", err)
+					fmt.Fprintf(os.Stderr, "  ⚠️ Poll error: %v\n", err)
 					time.Sleep(2 * time.Second)
 					continue
 				}
 
 				switch state {
 				case 1: // Scanned
-					fmt.Println("  📲 已扫码，请在手机上确认...")
+					fmt.Println("  📲 Scanned, confirm on your phone...")
 				case 2: // Expired
-					fmt.Println("\n❌ 二维码已过期，请重试")
+					fmt.Println("\n❌ QR code expired, please retry")
 					return nil
 				case 3: // Success
 					if err := authStore.Save(cred); err != nil {
-						output.EmitError("internal_error", fmt.Sprintf("保存凭证失败: %v", err), format)
+						output.EmitError("internal_error", fmt.Sprintf("Failed to save credential: %v", err), format)
 						return err
 					}
-					fmt.Println("\n✅ 登录成功！凭证已保存")
+					fmt.Println("\n✅ Login successful! Credential saved")
 					return nil
 				}
 
 				time.Sleep(2 * time.Second)
 			}
 
-			fmt.Println("\n❌ 登录超时，请重试")
+			fmt.Println("\n❌ Login timeout, please retry")
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&sessdata, "sessdata", "", "直接传入 SESSDATA Cookie")
-	cmd.Flags().StringVar(&biliJct, "bili-jct", "", "直接传入 bili_jct Cookie")
+	cmd.Flags().StringVar(&sessdata, "sessdata", "", "Set SESSDATA Cookie directly")
+	cmd.Flags().StringVar(&biliJct, "bili-jct", "", "Set bili_jct Cookie directly")
 
 	return cmd
 }
 
 // NewLogoutCmd creates the logout command.
 func NewLogoutCmd(authStore AuthProvider) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "logout",
-		Short: "退出登录",
-		Long:  `清除本地保存的登录凭证。`,
+		Short: "Logout",
+		Long:  `Clear locally saved login credentials.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			format := GetOutputFormat(cmd)
 			if err := authStore.Clear(); err != nil {
+				output.EmitError("internal_error", fmt.Sprintf("Failed to clear credential: %v", err), format)
 				return err
 			}
-			fmt.Println("✅ 已退出登录")
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(map[string]string{"message": "logged out"}, format)
+			}
+			fmt.Println("✅ Logged out")
 			return nil
 		},
 	}
+	return cmd
 }
 
 // NewStatusCmd creates the status command.
 func NewStatusCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "检查登录状态",
-		Long:  `检查当前 Bilibili 登录状态。`,
+		Short: "Check login status",
+		Long:  `Check current Bilibili login status.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := GetOutputFormat(cmd)
 			cred, err := authStore.GetCredential()
@@ -149,11 +155,11 @@ func NewStatusCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 			}
 
 			if err != nil || cred == nil {
-				fmt.Println("❌ 未登录")
-				fmt.Println("   使用 aiview bilibili login 登录")
+				fmt.Println("❌ Not logged in")
+				fmt.Println("   Use aiview bilibili login to log in")
 				return nil
 			}
-			fmt.Println("✅ 已登录")
+			fmt.Println("✅ Logged in")
 			return nil
 		},
 	}
@@ -163,15 +169,15 @@ func NewStatusCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 func NewWhoamiCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "whoami",
-		Short: "查看当前用户信息",
-		Long:  `查看当前登录的 Bilibili 用户信息。`,
+		Short: "View current user info",
+		Long:  `View currently logged-in Bilibili user info.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := GetOutputFormat(cmd)
 			client := getClient()
 
 			info, err := client.GetSelfInfo()
 			if err != nil {
-				output.EmitError("not_authenticated", "未登录，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Not logged in, use aiview bilibili login to log in", format)
 				return err
 			}
 
@@ -180,8 +186,8 @@ func NewWhoamiCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 			}
 
 			fmt.Printf("👤 %s (UID: %d)\n", info.Name, info.MID)
-			fmt.Printf("  等级: %d\n", info.Level)
-			fmt.Printf("  硬币: %d\n", info.Coins)
+			fmt.Printf("  Level: %d\n", info.Level)
+			fmt.Printf("  Coins: %d\n", info.Coins)
 			return nil
 		},
 	}

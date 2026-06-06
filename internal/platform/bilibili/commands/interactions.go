@@ -11,9 +11,9 @@ import (
 // NewLikeCmd creates the like command.
 func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
-		Use:   "like <BV号>",
-		Short: "点赞视频",
-		Long:  `点赞视频（需要登录且有写权限）。`,
+		Use:   "like <BV>",
+		Short: "Like video",
+		Long:  `Like a video (login and write permission required).`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -21,7 +21,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录并具有写权限，请使用 aiview bilibili login 登录", format)
+				output.EmitError("not_authenticated", "Login with write permission required, use aiview bilibili login", format)
 				return err
 			}
 			_ = cred
@@ -33,7 +33,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 			}
 
 			if err := client.LikeVideo(bvid, false); err != nil {
-				output.EmitError("api_error", fmt.Sprintf("点赞失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to like: %v", err), format)
 				return err
 			}
 
@@ -41,7 +41,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 				return output.EmitSuccess(ActionResult{Success: true, Action: "like"}, format)
 			}
 
-			fmt.Println("✅ 已点赞")
+			fmt.Println("✅ Liked")
 			return nil
 		},
 	}
@@ -52,9 +52,9 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 	var num int
 
 	cmd := &cobra.Command{
-		Use:   "coin <BV号>",
-		Short: "投币视频",
-		Long:  `投币视频（需要登录且有写权限）。`,
+		Use:   "coin <BV>",
+		Short: "Coin video",
+		Long:  `Give coins to a video (login and write permission required).`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -62,7 +62,7 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录并具有写权限", format)
+				output.EmitError("not_authenticated", "Login with write permission required", format)
 				return err
 			}
 			_ = cred
@@ -74,7 +74,7 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 			}
 
 			if err := client.CoinVideo(bvid, num); err != nil {
-				output.EmitError("api_error", fmt.Sprintf("投币失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to give coins: %v", err), format)
 				return err
 			}
 
@@ -82,21 +82,21 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 				return output.EmitSuccess(ActionResult{Success: true, Action: "coin"}, format)
 			}
 
-			fmt.Printf("✅ 已投 %d 个硬币\n", num)
+			fmt.Printf("✅ Gave %d coins\n", num)
 			return nil
 		},
 	}
 
-	cmd.Flags().IntVarP(&num, "num", "n", 1, "投币数量 (1-2)")
+	cmd.Flags().IntVarP(&num, "num", "n", 1, "Number of coins (1-2)")
 	return cmd
 }
 
 // NewTripleCmd creates the triple command.
 func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
-		Use:   "triple <BV号>",
-		Short: "一键三连",
-		Long:  `一键三连（点赞+投币+收藏）（需要登录且有写权限）。`,
+		Use:   "triple <BV>",
+		Short: "Triple like",
+		Long:  `Like, coin, and favorite a video in one go (login and write permission required).`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -104,7 +104,7 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录并具有写权限", format)
+				output.EmitError("not_authenticated", "Login with write permission required", format)
 				return err
 			}
 			_ = cred
@@ -116,7 +116,7 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 			}
 
 			if err := client.TripleVideo(bvid); err != nil {
-				output.EmitError("api_error", fmt.Sprintf("三连失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to triple: %v", err), format)
 				return err
 			}
 
@@ -124,7 +124,7 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 				return output.EmitSuccess(ActionResult{Success: true, Action: "triple"}, format)
 			}
 
-			fmt.Println("✅ 一键三连成功")
+			fmt.Println("✅ Triple action successful")
 			return nil
 		},
 	}
@@ -134,8 +134,8 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 func NewUnfollowCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "unfollow <UID>",
-		Short: "取消关注",
-		Long:  `取消关注用户（需要登录且有写权限）。`,
+		Short: "Unfollow",
+		Long:  `Unfollow a user (login and write permission required).`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
@@ -143,19 +143,19 @@ func NewUnfollowCmd(authStore AuthProvider, getClient func() Client) *cobra.Comm
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "需要登录并具有写权限", format)
+				output.EmitError("not_authenticated", "Login with write permission required", format)
 				return err
 			}
 			_ = cred
 
 			uid, err := strconv.Atoi(args[0])
 			if err != nil {
-				output.EmitError("invalid_input", "UID 必须是数字", format)
+				output.EmitError("invalid_input", "UID must be a number", format)
 				return err
 			}
 
 			if err := client.UnfollowUser(uid); err != nil {
-				output.EmitError("api_error", fmt.Sprintf("取消关注失败: %v", err), format)
+				output.EmitError("api_error", fmt.Sprintf("Failed to unfollow: %v", err), format)
 				return err
 			}
 
@@ -163,7 +163,7 @@ func NewUnfollowCmd(authStore AuthProvider, getClient func() Client) *cobra.Comm
 				return output.EmitSuccess(ActionResult{Success: true, Action: "unfollow"}, format)
 			}
 
-			fmt.Println("✅ 已取消关注")
+			fmt.Println("✅ Unfollowed")
 			return nil
 		},
 	}

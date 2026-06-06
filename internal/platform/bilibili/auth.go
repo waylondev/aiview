@@ -65,7 +65,7 @@ func (a *AuthStore) GetCredential() (*commands.Credential, error) {
 		return nil, nil
 	}
 	if cred.IsStale(7) {
-		return cred, fmt.Errorf("凭证已过期，请重新登录")
+		return cred, fmt.Errorf("Credential expired, please log in again")
 	}
 	return cred, nil
 }
@@ -80,13 +80,13 @@ func (a *AuthStore) GetCredentialOrNil() *commands.Credential {
 func (a *AuthStore) RequireCredential(requireWrite bool) (*commands.Credential, error) {
 	cred, err := a.GetCredential()
 	if err != nil {
-		return nil, fmt.Errorf("not_authenticated: 未登录，请使用 aiview bilibili login 登录")
+		return nil, fmt.Errorf("not_authenticated: not logged in, use aiview bilibili login")
 	}
 	if cred == nil {
-		return nil, fmt.Errorf("not_authenticated: 未登录，请使用 aiview bilibili login 登录")
+		return nil, fmt.Errorf("not_authenticated: not logged in, use aiview bilibili login")
 	}
 	if requireWrite && !cred.HasWriteCapability() {
-		return nil, fmt.Errorf("permission_denied: 当前凭证不支持写操作，请重新登录")
+		return nil, fmt.Errorf("permission_denied: current credential does not support write operations, please log in again")
 	}
 	return cred, nil
 }
