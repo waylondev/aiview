@@ -40,7 +40,7 @@ const (
 // ResolveFormat determines the output format based on flags and TTY status.
 func ResolveFormat(asJSON, asYAML bool) Format {
 	if asJSON && asYAML {
-		fmt.Fprintln(os.Stderr, "不能同时使用 --json 和 --yaml")
+		fmt.Fprintln(os.Stderr, "Cannot use both --json and --yaml")
 		os.Exit(1)
 	}
 	if asJSON {
@@ -124,7 +124,7 @@ func NewTableWriter() *tabwriter.Writer {
 	return tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
 }
 
-// FormatCount formats a large number with 万 suffix.
+// FormatCount formats a large number with a "w" (万) suffix.
 func FormatCount(n int) string {
 	if n >= 10000 {
 		return fmt.Sprintf("%.1f万", float64(n)/10000)

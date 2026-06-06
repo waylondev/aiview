@@ -20,13 +20,13 @@ var (
 // rootCmd represents the base command.
 var rootCmd = &cobra.Command{
 	Use:   "aiview",
-	Short: "aiview — 多平台 CLI 工具",
-	Long:  `aiview 是一个多平台 CLI 工具，支持 Bilibili 等平台的内容浏览、搜索和交互。`,
+	Short: "aiview — Multi-platform CLI tool",
+	Long:  `aiview is a multi-platform CLI tool for browsing, searching, and interacting with content from Bilibili and other platforms.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		cfg, err = config.LoadConfig()
 		if err != nil {
-			return fmt.Errorf("加载配置失败: %w", err)
+			return fmt.Errorf("failed to load config: %w", err)
 		}
 		return nil
 	},
@@ -66,7 +66,7 @@ func ExitError(code, message string) {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&asJSON, "json", false, "输出 JSON 格式")
-	rootCmd.PersistentFlags().BoolVar(&asYAML, "yaml", false, "输出 YAML 格式")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "启用详细日志")
+	rootCmd.PersistentFlags().BoolVar(&asJSON, "json", false, "Output in JSON format")
+	rootCmd.PersistentFlags().BoolVar(&asYAML, "yaml", false, "Output in YAML format")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 }
