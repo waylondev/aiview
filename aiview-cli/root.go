@@ -7,6 +7,8 @@ import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/platform"
+	_ "github.com/jackwener/aiview/internal/platform/bilibili"
+	_ "github.com/jackwener/aiview/internal/platform/douyin"
 	"github.com/spf13/cobra"
 )
 
