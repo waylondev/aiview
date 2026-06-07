@@ -134,6 +134,27 @@ type Client interface {
 
 	// Collections
 	GetUserCollections(uid int) (map[string]interface{}, error)
+
+	// Relation stat
+	GetRelationStat(uid int) (map[string]interface{}, error)
+
+	// Region videos
+	GetRegionVideos(rid int, page int, count int, sort string) (map[string]interface{}, error)
+
+	// Live room info
+	GetLiveRoomInfo(roomID int) (map[string]interface{}, error)
+
+	// Precious videos
+	GetPreciousVideos() (map[string]interface{}, error)
+
+	// Hot search
+	GetHotSearch(limit int) (map[string]interface{}, error)
+
+	// Video online count
+	GetVideoOnlineCount(bvid string) (map[string]interface{}, error)
+
+	// Weekly hot videos
+	GetWeeklyHotVideos(number int) (map[string]interface{}, error)
 }
 
 // AuthProvider is the interface for credential management.

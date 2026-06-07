@@ -28,6 +28,8 @@ aiview bilibili user 37737161
 | `logout` | Clear saved credentials | ✅ Done |
 | `status` | Check login status | ✅ Done |
 | `whoami` | Show current user info | ✅ Done |
+| `video-status <BV>` | View video statistics | ✅ Done |
+| `relation <UID>` | View relation status | ✅ Done |
 
 ### ✅ User
 | Command | Description | Status |
@@ -42,6 +44,7 @@ aiview bilibili user 37737161
 |---------|-------|--------|
 | `video <BV>` | `--subtitle, --ai, --comments, --related` | ✅ Done |
 | `tags <BV>` | — | ✅ Done |
+| `online <BV>` | — | ✅ Done |
 
 ### ✅ Discovery
 | Command | Description | Status |
@@ -52,12 +55,16 @@ aiview bilibili user 37737161
 | `search <keyword>` | Search videos/users | ✅ Done |
 | `suggest <keyword>` | Get search suggestions | ✅ Done |
 | `recommend` | Get homepage recommendations | ✅ Done |
+| `region <rid>` | View videos by region | ✅ Done |
+| `trending` | View trending/hot search keywords | ✅ Done |
+| `precious` | View must-watch (入站必刷) curated videos | ✅ Done |
+| `weekly <number>` | View weekly hot video series | ✅ Done |
 
 ### ✅ Collections & Storage
 | Command | Description | Status |
 |---------|-------------|--------|
-| `favorites` | View favorite folders | ✅ Done |
-| `favorite add/del <BV>` | Add/remove video from favorites | ✅ Done |
+| `favorites <UID>` | View favorite folders | ✅ Done |
+| `favorite <BV>` | Add/remove video from favorites | ✅ Done |
 | `collection <UID>` | View user's video collections | ✅ Done |
 | `history` | View watch history | ✅ Done |
 | `watch-later` | View watch later list | ✅ Done |
@@ -85,10 +92,11 @@ aiview bilibili user 37737161
 | `dynamic-post <text>` | Post a text dynamic | ✅ Done |
 | `dynamic-delete <id>` | Delete a dynamic | ✅ Done |
 
-### ✅ Audio
+### ✅ Audio & Live
 | Command | Description | Status |
 |---------|-------------|--------|
 | `audio <BV>` | Download audio and split into WAV (requires ffmpeg) | ✅ Done |
+| `live` | View live room info | ✅ Done |
 
 ## Global Flags
 
@@ -102,19 +110,9 @@ aiview bilibili user 37737161
 
 | Issue | Description | Workaround |
 |-------|-------------|------------|
-| `dynamic (user space)` | B站 rates limits user space dynamics API | Use `feed` for followed users' dynamics, or retry with delays |
-| `like` | Returns "already liked" (65006) if previously liked | Use `--undo` flag to unlike first |
+| `dynamic (user space)` | B站 rate limits user space dynamics API | Use `feed` for followed users' dynamics, or retry with delays |
+| `live` | Non-existent rooms return HTML error | Use a valid room ID |
 | `username encoding` | Chinese usernames may show garbled on Windows terminal | The JSON output contains correct Unicode data |
-
-## TODO
-
-- [ ] Add comprehensive test suite with mock API responses
-- [ ] Implement CI/CD pipeline
-- [ ] Add more platforms (e.g. Douyin, YouTube)
-- [ ] Add video download capability
-- [ ] Add live streaming monitoring commands
-- [ ] Implement concurrent batch operations
-- [ ] Write API usage documentation per command
 
 ## Build
 

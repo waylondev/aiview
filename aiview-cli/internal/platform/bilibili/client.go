@@ -1040,30 +1040,36 @@ func (c *Client) GetUserDynamics(uid int, page int) (map[string]interface{}, err
 	}
 	params.Set("features", "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete")
 
-	data, err := c.wbiGet("/x/polymer/web-dynamic/v1/feed/space", params)
-	if err == nil {
-		return data, nil
+	return c.wbiGet("/x/polymer/web-dynamic/v1/feed/space", params)
+}
+
+// GetRelationStat fetches the relation status between the current user and another user.
+func (c *Client) GetRelationStat(uid int) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("vmid", strconv.Itoa(uid))
+
+	return c.get("/x/relation/stat", params)
+}
+
+// GetRegionVideos fetches videos by region/category.
+func (c *Client) GetRegionVideos(rid int, page int, count int, sort string) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("rid", strconv.Itoa(rid))
+	params.Set("pn", strconv.Itoa(page))
+	params.Set("ps", strconv.Itoa(min(count, 50)))
+	if sort != "" {
+		params.Set("sort", sort)
 	}
 
-	// If rate limited or wbi error, try old API as fallback
-	if err != nil {
-		// Try the old API endpoint (no WBI signing required)
-		oldParams := url.Values{}
-		oldParams.Set("host_uid", strconv.Itoa(uid))
-		oldParams.Set("offset_dynamic_id", "0")
-		if page > 1 {
-			oldParams.Set("offset_dynamic_id", strconv.Itoa(page))
-		}
-		oldParams.Set("need_top", "0")
+	return c.get("/x/web-interface/dynamic/region", params)
+}
 
-		oldData, oldErr := c.getWithReferer("/dynamic_svr/v1/dynamic_svr/space_history", oldParams,
-			fmt.Sprintf("https://space.bilibili.com/%d/dynamic", uid))
-		if oldErr == nil {
-			return oldData, nil
-		}
-	}
+// GetLiveRoomInfo fetches live room information by room ID.
+func (c *Client) GetLiveRoomInfo(roomID int) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("room_id", strconv.Itoa(roomID))
 
-	return data, err
+	return c.get("/room/v1/Room/get_info", params)
 }
 
 // GetUserCollections fetches a user's series/collection list.
@@ -1076,21 +1082,7 @@ func (c *Client) GetUserCollections(uid int) (map[string]interface{}, error) {
 	params.Set("sort_reverse", "false")
 
 	referer := fmt.Sprintf("https://space.bilibili.com/%d", uid)
-
-	// Try primary endpoint first
-	data, err := c.wbiGetWithReferer("/x/polymer/web-space/home/seasons_series", params, referer)
-	if err == nil {
-		return data, nil
-	}
-
-	// Fallback 1: try the old endpoint (may not need referer)
-	oldData, oldErr := c.wbiGet("/x/polymer/space/seasons_series_list", params)
-	if oldErr == nil {
-		return oldData, nil
-	}
-
-	// If both fail, return the primary error
-	return data, err
+	return c.wbiGetWithReferer("/x/polymer/web-space/home/seasons_series", params, referer)
 }
 
 // PostDynamic publishes a plain text dynamic.
@@ -1107,6 +1099,37 @@ func (c *Client) DeleteDynamic(dynamicID int) (map[string]interface{}, error) {
 	params := url.Values{}
 	params.Set("dynamic_id", strconv.Itoa(dynamicID))
 	return c.post("/x/polymer/web-dynamic/v1/retcode", params)
+}
+
+// GetPreciousVideos fetches the "入站必刷" (must-watch) curated video list.
+func (c *Client) GetPreciousVideos() (map[string]interface{}, error) {
+	return c.get("/x/web-interface/popular/precious", nil)
+}
+
+// GetHotSearch fetches trending/hot search keywords.
+func (c *Client) GetHotSearch(limit int) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("limit", strconv.Itoa(min(limit, 50)))
+	return c.wbiGet("/x/web-interface/wbi/search/square", params)
+}
+
+// GetVideoOnlineCount fetches the real-time online viewer count for a video.
+func (c *Client) GetVideoOnlineCount(bvid string) (map[string]interface{}, error) {
+	info, err := c.GetVideoInfo(bvid)
+	if err != nil {
+		return nil, err
+	}
+	params := url.Values{}
+	params.Set("bvid", bvid)
+	params.Set("cid", strconv.Itoa(info.CID))
+	return c.get("/x/player/online/total", params)
+}
+
+// GetWeeklyHotVideos fetches the weekly hot video list by series number.
+func (c *Client) GetWeeklyHotVideos(number int) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("number", strconv.Itoa(number))
+	return c.wbiGet("/x/web-interface/popular/series/one", params)
 }
 
 // Helper functions for parsing JSON

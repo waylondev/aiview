@@ -79,5 +79,29 @@ func init() {
 	// Fans
 	biliCmd.AddCommand(biliCommands.NewFansCmd(func() biliCommands.Client { return bp.BuildClient() }))
 
+	// Video stat
+	biliCmd.AddCommand(biliCommands.NewVideoStatCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Relation
+	biliCmd.AddCommand(biliCommands.NewRelationCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Region
+	biliCmd.AddCommand(biliCommands.NewRegionCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Live
+	biliCmd.AddCommand(biliCommands.NewLiveCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Precious
+	biliCmd.AddCommand(biliCommands.NewPreciousCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Trending
+	biliCmd.AddCommand(biliCommands.NewTrendingCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Online
+	biliCmd.AddCommand(biliCommands.NewOnlineCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
+	// Weekly
+	biliCmd.AddCommand(biliCommands.NewWeeklyCmd(func() biliCommands.Client { return bp.BuildClient() }))
+
 	rootCmd.AddCommand(biliCmd)
 }
