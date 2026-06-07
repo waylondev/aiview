@@ -120,6 +120,18 @@
 | `online <BV>` | ✅ | Real-time video online viewer count (total + web) |
 | `weekly <number>` | ✅ (fixed) | Weekly hot video series, requires WBI signing |
 
+### 12. Douyin Commands
+
+| Command | Args | Status | Notes |
+|---------|------|--------|-------|
+| `douyin hot` | `--json` | ✅ | Returns 50 hot search items |
+| `douyin trending` | `--json` | ✅ | Returns trending list |
+| `douyin search` | `<keyword>` | ⚠️ | Returns empty results (needs cookies) |
+| `douyin video` | `<share_url>` | 🔘 | Not tested (needs login) |
+| `douyin user` | `<uid>` | 🔘 | Not tested (needs login) |
+
+**Summary**: 2 ✅ / 1 ⚠️ / 0 ❌ / 2 🔘
+
 ---
 
 ## Summary
@@ -137,7 +149,8 @@
 | Dynamic | 3 | 0 | 0 | 1 | 2 |
 | Audio & Live | 2 | 1 | 1 | 0 | 0 |
 | New Read-Only | 4 | 4 | 0 | 0 | 0 |
-| **Total** | **48** | **34** | **2** | **1** | **11** |
+| Douyin | 5 | 2 | 1 | 0 | 2 |
+| **Total** | **53** | **36** | **3** | **3** | **13** |
 
 ### Failed Commands
 - **dynamic (user space)** — `rate_limited`: B站服务器风控限制用户空间动态接口

@@ -126,3 +126,28 @@ go build -o aiview-cli.exe .
 - [Cobra](https://github.com/spf13/cobra) — CLI framework
 - [ffmpeg](https://ffmpeg.org/) — Required for audio WAV splitting (`audio --segment`)
 - Go 1.21+
+
+## Douyin Platform
+
+Basic read-only commands for Douyin (抖音) content discovery.
+
+### Commands
+
+| Command | Usage | Status | Description |
+|---------|-------|--------|-------------|
+| `hot` | `douyin hot [--json\|--yaml]` | ✅ Done | View trending/hot search on Douyin |
+| `trending` | `douyin trending [--json\|--yaml]` | ✅ Done | View trending topics/challenges |
+| `search` | `douyin search <keyword> [--page N] [--count N]` | ⚠️ Partial | Search Douyin content (requires cookies for full results) |
+| `video` | `douyin video <share_url>` | 🔘 Not Tested | View video details (requires login) |
+| `user` | `douyin user <uid>` | 🔘 Not Tested | View user info (requires login) |
+
+### Notes
+- `hot` and `trending` work without authentication
+- `search` returns limited results without cookies
+- `video` and `user` commands require cookie-based authentication
+
+### TODO
+- [ ] Add cookie-based login support
+- [ ] Implement video detail parsing
+- [ ] Implement user profile parsing
+- [ ] Add search result display with pagination

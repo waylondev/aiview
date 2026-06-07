@@ -1,0 +1,62 @@
+package douyin
+
+import (
+	"fmt"
+
+	"github.com/jackwener/aiview/internal/output"
+	"github.com/spf13/cobra"
+)
+
+// NewHotCmd creates the hot search command.
+func NewHotCmd(getClient func() Client) *cobra.Command {
+	return &cobra.Command{
+		Use:   "hot",
+		Short: "View trending/hot search on Douyin",
+		Long: `View the current hot search/trending list on Douyin.
+
+Examples:
+  aiview douyin hot
+  aiview douyin hot --json`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getClient()
+			format := GetOutputFormat(cmd)
+
+			result, err := client.GetHotSearch()
+			if err != nil {
+				output.EmitError("api_error", fmt.Sprintf("Failed to get hot search: %v", err), format)
+				return err
+			}
+
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(result, format)
+			}
+
+			data := getMap(result, "data")
+			if data == nil {
+				fmt.Println("No data returned")
+				return nil
+			}
+
+			wordList := getSlice(data, "word_list")
+			if len(wordList) == 0 {
+				fmt.Println("No hot search results")
+				return nil
+			}
+
+			fmt.Printf("🔥 Douyin Hot Search:\n\n")
+			for i, item := range wordList {
+				m := item.(map[string]interface{})
+				word := getString(m, "word")
+				hotValue := getInt(m, "hot_value")
+
+				fmt.Printf("  %2d. %s", i+1, word)
+				if hotValue > 0 {
+					fmt.Printf(" (热度: %d)", hotValue)
+				}
+				fmt.Println()
+			}
+			return nil
+		},
+	}
+}

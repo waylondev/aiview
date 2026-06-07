@@ -33,3 +33,8 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 	// Will be populated by the CLI layer after import initialization
 	return nil
 }
+
+// BuildClient creates a client using the current credential.
+func (p *DouyinPlatform) BuildClient() *Client {
+	return NewClient(30, "")
+}
