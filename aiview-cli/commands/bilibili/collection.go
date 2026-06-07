@@ -3,6 +3,7 @@ package bilibili
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
@@ -32,7 +33,11 @@ Examples:
 
 			result, err := client.GetUserCollections(uid)
 			if err != nil {
-				output.EmitError("api_error", fmt.Sprintf("Failed to get collections: %v", err), format)
+				if strings.Contains(err.Error(), "-400") {
+					output.EmitError("no_collections", "This user has no video collections (合集/系列). Try another UID.", format)
+				} else {
+					output.EmitError("api_error", fmt.Sprintf("Failed to get collections: %v", err), format)
+				}
 				return err
 			}
 

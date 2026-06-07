@@ -129,6 +129,8 @@ type Client interface {
 
 	// Dynamics
 	GetUserDynamics(uid int, page int) (map[string]interface{}, error)
+	PostDynamic(text string) (map[string]interface{}, error)
+	DeleteDynamic(dynamicID int) (map[string]interface{}, error)
 
 	// Collections
 	GetUserCollections(uid int) (map[string]interface{}, error)

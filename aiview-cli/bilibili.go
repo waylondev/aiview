@@ -42,6 +42,8 @@ func init() {
 	biliCmd.AddCommand(biliCommands.NewUserCmd(func() biliCommands.Client { return bp.BuildClient() }))
 	biliCmd.AddCommand(biliCommands.NewUserVideosCmd(func() biliCommands.Client { return bp.BuildClient() }))
 	biliCmd.AddCommand(biliCommands.NewDynamicCmd(func() biliCommands.Client { return bp.BuildClient() }))
+	biliCmd.AddCommand(biliCommands.NewDynamicPostCmd(bp.GetAuthStore(), func() biliCommands.Client { return bp.BuildClient() }))
+	biliCmd.AddCommand(biliCommands.NewDynamicDeleteCmd(bp.GetAuthStore(), func() biliCommands.Client { return bp.BuildClient() }))
 	biliCmd.AddCommand(biliCommands.NewCollectionCmd(func() biliCommands.Client { return bp.BuildClient() }))
 
 	// Collections

@@ -979,15 +979,29 @@ func (c *Client) DelFavorite(bvid string, fid int) error {
 	return err
 }
 
-// GetRecommendVideos fetches recommended videos.
+// GetRecommendVideos fetches recommended videos from homepage.
 func (c *Client) GetRecommendVideos(fresh bool, page int) (map[string]interface{}, error) {
 	params := url.Values{}
-	params.Set("y_num", "3")
+	params.Set("fresh_type", "4")
 	params.Set("fresh_idx", strconv.Itoa(page))
 	params.Set("ps", "20")
-	params.Set("fresh_type", "3")
+	params.Set("y_num", "3")
 
-	return c.wbiGet("/x/web-interface/index/top/rcmd", params)
+	var lastErr error
+	for i := 0; i < 3; i++ {
+		data, err := c.wbiGet("/x/web-interface/index/top/rcmd", params)
+		if err == nil {
+			return data, nil
+		}
+		lastErr = err
+		// Check if rate limited
+		if strings.Contains(err.Error(), "rate_limited") {
+			time.Sleep(time.Duration(2*(i+1)) * time.Second)
+			continue
+		}
+		return nil, err
+	}
+	return nil, lastErr
 }
 
 // GetVideoTags fetches tags of a video.
@@ -1024,8 +1038,32 @@ func (c *Client) GetUserDynamics(uid int, page int) (map[string]interface{}, err
 	if page > 1 {
 		params.Set("offset_dynamic_id", strconv.Itoa(page))
 	}
+	params.Set("features", "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete")
 
-	return c.wbiGet("/x/polymer/web-dynamic/v1/feed/space", params)
+	data, err := c.wbiGet("/x/polymer/web-dynamic/v1/feed/space", params)
+	if err == nil {
+		return data, nil
+	}
+
+	// If rate limited or wbi error, try old API as fallback
+	if err != nil {
+		// Try the old API endpoint (no WBI signing required)
+		oldParams := url.Values{}
+		oldParams.Set("host_uid", strconv.Itoa(uid))
+		oldParams.Set("offset_dynamic_id", "0")
+		if page > 1 {
+			oldParams.Set("offset_dynamic_id", strconv.Itoa(page))
+		}
+		oldParams.Set("need_top", "0")
+
+		oldData, oldErr := c.getWithReferer("/dynamic_svr/v1/dynamic_svr/space_history", oldParams,
+			fmt.Sprintf("https://space.bilibili.com/%d/dynamic", uid))
+		if oldErr == nil {
+			return oldData, nil
+		}
+	}
+
+	return data, err
 }
 
 // GetUserCollections fetches a user's series/collection list.
@@ -1035,9 +1073,40 @@ func (c *Client) GetUserCollections(uid int) (map[string]interface{}, error) {
 	params.Set("page_num", "1")
 	params.Set("page_size", "30")
 	params.Set("web_location", "333.999")
+	params.Set("sort_reverse", "false")
 
 	referer := fmt.Sprintf("https://space.bilibili.com/%d", uid)
-	return c.wbiGetWithReferer("/x/polymer/web-space/home/seasons_series", params, referer)
+
+	// Try primary endpoint first
+	data, err := c.wbiGetWithReferer("/x/polymer/web-space/home/seasons_series", params, referer)
+	if err == nil {
+		return data, nil
+	}
+
+	// Fallback 1: try the old endpoint (may not need referer)
+	oldData, oldErr := c.wbiGet("/x/polymer/space/seasons_series_list", params)
+	if oldErr == nil {
+		return oldData, nil
+	}
+
+	// If both fail, return the primary error
+	return data, err
+}
+
+// PostDynamic publishes a plain text dynamic.
+// Requires logged-in credential with write permission.
+func (c *Client) PostDynamic(text string) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("content", text)
+	return c.post("/x/polymer/web-dynamic/v1/opus/schedule", params)
+}
+
+// DeleteDynamic deletes a dynamic by its ID.
+// Requires logged-in credential with write permission.
+func (c *Client) DeleteDynamic(dynamicID int) (map[string]interface{}, error) {
+	params := url.Values{}
+	params.Set("dynamic_id", strconv.Itoa(dynamicID))
+	return c.post("/x/polymer/web-dynamic/v1/retcode", params)
 }
 
 // Helper functions for parsing JSON

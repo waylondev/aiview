@@ -74,3 +74,81 @@ Examples:
 	cmd.Flags().IntVarP(&page, "page", "p", 1, "Page number")
 	return cmd
 }
+
+// NewDynamicPostCmd creates the dynamic-post command.
+func NewDynamicPostCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
+	return &cobra.Command{
+		Use:   "dynamic-post <text>",
+		Short: "Post a text dynamic",
+		Long: `Post a plain text dynamic to your Bilibili feed (login and write permission required).
+
+Examples:
+  aiview bilibili dynamic-post "Hello World!"`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getClient()
+			format := GetOutputFormat(cmd)
+
+			_, err := authStore.RequireCredential(true)
+			if err != nil {
+				output.EmitError("not_authenticated", "Login with write permission required", format)
+				return err
+			}
+
+			result, err := client.PostDynamic(args[0])
+			if err != nil {
+				output.EmitError("api_error", fmt.Sprintf("Failed to post dynamic: %v", err), format)
+				return err
+			}
+
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(result, format)
+			}
+
+			fmt.Println("✅ Dynamic posted successfully")
+			return nil
+		},
+	}
+}
+
+// NewDynamicDeleteCmd creates the dynamic-delete command.
+func NewDynamicDeleteCmd(authStore AuthProvider, getClient func() Client) *cobra.Command {
+	return &cobra.Command{
+		Use:   "dynamic-delete <id>",
+		Short: "Delete a dynamic",
+		Long: `Delete a dynamic by its ID (login and write permission required).
+
+Examples:
+  aiview bilibili dynamic-delete 123456`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getClient()
+			format := GetOutputFormat(cmd)
+
+			_, err := authStore.RequireCredential(true)
+			if err != nil {
+				output.EmitError("not_authenticated", "Login with write permission required", format)
+				return err
+			}
+
+			dynamicID, err := strconv.Atoi(args[0])
+			if err != nil {
+				output.EmitError("invalid_input", "Dynamic ID must be a number", format)
+				return err
+			}
+
+			result, err := client.DeleteDynamic(dynamicID)
+			if err != nil {
+				output.EmitError("api_error", fmt.Sprintf("Failed to delete dynamic: %v", err), format)
+				return err
+			}
+
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(result, format)
+			}
+
+			fmt.Println("✅ Dynamic deleted successfully")
+			return nil
+		},
+	}
+}
