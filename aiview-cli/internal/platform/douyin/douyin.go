@@ -3,6 +3,7 @@ package douyin
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	douyinCommands "github.com/jackwener/aiview/commands/douyin"
 	"github.com/spf13/cobra"
 )
 
@@ -28,10 +29,21 @@ func (p *DouyinPlatform) NewClient(cfg *config.Config) (platform.Client, error) 
 	return NewClient(30, ""), nil
 }
 
-// Commands returns all Douyin commands (populated by the CLI layer).
+// Commands returns all Douyin commands.
 func (p *DouyinPlatform) Commands() []*cobra.Command {
-	// Will be populated by the CLI layer after import initialization
-	return nil
+	douyinCmd := &cobra.Command{
+		Use:   "douyin",
+		Short: "Douyin platform commands",
+		Long:  `Commands for interacting with Douyin (抖音) content.`,
+	}
+
+	douyinCmd.AddCommand(douyinCommands.NewHotCmd(func() douyinCommands.Client { return p.BuildClient() }))
+	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(func() douyinCommands.Client { return p.BuildClient() }))
+	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(func() douyinCommands.Client { return p.BuildClient() }))
+	douyinCmd.AddCommand(douyinCommands.NewVideoCmd(func() douyinCommands.Client { return p.BuildClient() }))
+	douyinCmd.AddCommand(douyinCommands.NewUserCmd(func() douyinCommands.Client { return p.BuildClient() }))
+
+	return []*cobra.Command{douyinCmd}
 }
 
 // BuildClient creates a client using the current credential.

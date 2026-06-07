@@ -3,7 +3,7 @@ package bilibili
 import (
 	"fmt"
 
-	biliapi "github.com/jackwener/aiview/internal/platform/bilibili"
+	biliapi "github.com/jackwener/aiview/internal/platform/bilibili/bilibilitypes"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
