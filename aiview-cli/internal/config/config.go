@@ -15,6 +15,13 @@ type Config struct {
 // PlatformsConfig holds platform-specific configurations.
 type PlatformsConfig struct {
 	Bilibili BilibiliConfig `mapstructure:"bilibili"`
+	Douyin   DouyinConfig   `mapstructure:"douyin"`
+}
+
+// DouyinConfig holds Douyin-specific configuration.
+type DouyinConfig struct {
+	Cookies string `mapstructure:"cookies"`
+	Timeout int    `mapstructure:"timeout"`
 }
 
 // BilibiliConfig holds Bilibili-specific configuration.
@@ -54,6 +61,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("cache_ttl", 300)
 	viper.SetDefault("output", "auto")
 	viper.SetDefault("platforms.bilibili.timeout", 30)
+	viper.SetDefault("platforms.douyin.timeout", 30)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

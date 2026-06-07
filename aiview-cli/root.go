@@ -45,23 +45,23 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-// GetConfig returns the loaded configuration.
-func GetConfig() *config.Config {
+// getConfig returns the loaded configuration.
+func getConfig() *config.Config {
 	return cfg
 }
 
-// GetOutputFormat resolves the current output format.
-func GetOutputFormat() output.Format {
+// getOutputFormat resolves the current output format.
+func getOutputFormat() output.Format {
 	return output.ResolveFormat(asJSON, asYAML)
 }
 
-// IsVerbose returns whether verbose logging is enabled.
-func IsVerbose() bool {
+// isVerbose returns whether verbose logging is enabled.
+func isVerbose() bool {
 	return verbose
 }
 
-// ExitError prints an error message and exits with code 1.
-func ExitError(code, message string) {
+// exitError prints an error message and exits with code 1.
+func exitError(code, message string) {
 	format := output.ResolveFormat(asJSON, asYAML)
 	output.EmitError(code, message, format)
 	os.Exit(1)
