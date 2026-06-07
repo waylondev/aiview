@@ -191,3 +191,9 @@ func (c *Client) wbiGet(path string, params url.Values) (map[string]interface{},
 	signedParams := c.signWBI(params)
 	return c.get(path, signedParams)
 }
+
+// wbiGetWithReferer performs a GET request with WBI signing and custom Referer.
+func (c *Client) wbiGetWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
+	signedParams := c.signWBI(params)
+	return c.getWithReferer(path, signedParams, referer)
+}

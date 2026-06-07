@@ -6,6 +6,7 @@ type (
 	VideoInfo struct {
 		BVID        string     `json:"bvid"`
 		AID         int        `json:"aid"`
+		CID         int        `json:"cid"`
 		Title       string     `json:"title"`
 		Description string     `json:"description"`
 		Duration    int        `json:"duration_seconds"`

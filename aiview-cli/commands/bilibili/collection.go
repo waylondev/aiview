@@ -41,18 +41,29 @@ Examples:
 			}
 
 			d := getMap(result, "data")
-			list := getSlice(d, "list")
+			itemsLists := getMap(d, "items_lists")
+			seasonsList := getSlice(itemsLists, "seasons_list")
+			seriesList := getSlice(itemsLists, "series_list")
 
 			fmt.Printf("📂 Collections (UID: %d):\n\n", uid)
-			if len(list) == 0 {
+			if len(seasonsList) == 0 && len(seriesList) == 0 {
 				fmt.Println("  No collections")
 				return nil
 			}
-			for i, item := range list {
+			count := 0
+			for _, item := range seasonsList {
+				count++
 				m := item.(map[string]interface{})
-				name := getString(m, "name")
+				name := getString(m, "title")
 				total := getInt(m, "total")
-				fmt.Printf("  %d. %s (%d videos)\n", i+1, name, total)
+				fmt.Printf("  %d. [Season] %s (%d videos)\n", count, name, total)
+			}
+			for _, item := range seriesList {
+				count++
+				m := item.(map[string]interface{})
+				name := getString(m, "title")
+				total := getInt(m, "total")
+				fmt.Printf("  %d. [Series] %s (%d videos)\n", count, name, total)
 			}
 			return nil
 		},

@@ -29,18 +29,14 @@ func NewSuggestCmd(getClient func() Client) *cobra.Command {
 			}
 
 			d := getMap(data, "data")
-			showName := getSlice(d, "show_name")
+			showName := getString(d, "show_name")
 
 			fmt.Printf("🔍 Suggestions for \"%s\":\n\n", args[0])
-			if len(showName) == 0 {
+			if showName == "" {
 				fmt.Println("  No suggestions")
 				return nil
 			}
-			for i, s := range showName {
-				m := s.(map[string]interface{})
-				name := getString(m, "name")
-				fmt.Printf("  %d. %s\n", i+1, name)
-			}
+			fmt.Printf("  %s\n", showName)
 			return nil
 		},
 	}

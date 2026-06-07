@@ -40,7 +40,7 @@ func NewDanmakuCmd(getClient func() Client) *cobra.Command {
 			// Get the first page's cid
 			// We need the cid for danmaku - get it from the video info or a separate call
 			// For simplicity, download the danmaku XML for the aid (oid)
-			xmlData, err := client.GetVideoDanmaku(info.AID)
+			xmlData, err := client.GetVideoDanmaku(info.CID)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get danmaku: %v", err), format)
 				return err
@@ -132,7 +132,7 @@ func NewDanmakuSendCmd(authStore AuthProvider, getClient func() Client) *cobra.C
 				return err
 			}
 
-			if err := client.PostDanmaku(info.AID, info.AID, message, progress); err != nil {
+			if err := client.PostDanmaku(info.AID, info.CID, message, progress); err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to send danmaku: %v", err), format)
 				return err
 			}

@@ -68,6 +68,12 @@ func (c *Client) buildHeaders() http.Header {
 	return h
 }
 
+func (c *Client) buildRefererHeaders(referer string) http.Header {
+	h := c.buildHeaders()
+	h.Set("Referer", referer)
+	return h
+}
+
 func (c *Client) get(path string, params url.Values) (map[string]interface{}, error) {
 	reqURL := baseURL + path
 	if len(params) > 0 {
@@ -86,6 +92,31 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	}
 	defer resp.Body.Close()
 
+	return c.parseResponse(resp)
+}
+
+func (c *Client) getWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
+	reqURL := baseURL + path
+	if len(params) > 0 {
+		reqURL += "?" + params.Encode()
+	}
+
+	req, err := http.NewRequest("GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header = c.buildRefererHeaders(referer)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("network request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	return c.parseResponse(resp)
+}
+
+func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response: %w", err)
@@ -178,6 +209,7 @@ func (c *Client) GetVideoInfo(bvid string) (*VideoInfo, error) {
 	return &VideoInfo{
 		BVID:        bvid,
 		AID:         getInt(info, "aid"),
+		CID:         getInt(info, "cid"),
 		Title:       getString(info, "title"),
 		Description: strings.TrimSpace(getString(info, "desc")),
 		Duration:    getInt(info, "duration"),
@@ -299,7 +331,7 @@ func (c *Client) GetVideoAIConclusion(bvid string) (string, error) {
 
 	params := url.Values{}
 	params.Set("bvid", bvid)
-	params.Set("cid", strconv.Itoa(info.AID))
+	params.Set("cid", strconv.Itoa(info.CID))
 
 	data, err := c.get("/x/player/v2", params)
 	if err != nil {
@@ -829,7 +861,7 @@ func (c *Client) GetAudioURL(bvid string) (string, error) {
 
 	params := url.Values{}
 	params.Set("bvid", bvid)
-	params.Set("cid", strconv.Itoa(info.AID))
+	params.Set("cid", strconv.Itoa(info.CID))
 	params.Set("qn", "0")
 	params.Set("fnval", "4048")
 	params.Set("fourk", "1")
@@ -883,11 +915,15 @@ func (c *Client) GetVideoCommentsRaw(oid int, page int, sort int) (map[string]in
 	params := url.Values{}
 	params.Set("oid", strconv.Itoa(oid))
 	params.Set("type", "1")
-	params.Set("pn", strconv.Itoa(page))
+	params.Set("next", strconv.Itoa(page-1))
 	params.Set("ps", "20")
-	params.Set("sort", strconv.Itoa(sort))
+	if sort == 2 {
+		params.Set("mode", "2")
+	} else {
+		params.Set("mode", "1")
+	}
 
-	return c.get("/x/v2/comment/main", params)
+	return c.get("/x/v2/reply/main", params)
 }
 
 // GetVideoDanmaku fetches danmaku (bullet comments) for a video segment.
@@ -946,13 +982,12 @@ func (c *Client) DelFavorite(bvid string, fid int) error {
 // GetRecommendVideos fetches recommended videos.
 func (c *Client) GetRecommendVideos(fresh bool, page int) (map[string]interface{}, error) {
 	params := url.Values{}
-	if fresh {
-		params.Set("fresh_type", "4")
-	}
+	params.Set("y_num", "3")
+	params.Set("fresh_idx", strconv.Itoa(page))
 	params.Set("ps", "20")
-	params.Set("pn", strconv.Itoa(page))
+	params.Set("fresh_type", "3")
 
-	return c.get("/x/web-interface/index/top/rcmd", params)
+	return c.wbiGet("/x/web-interface/index/top/rcmd", params)
 }
 
 // GetVideoTags fetches tags of a video.
@@ -990,16 +1025,19 @@ func (c *Client) GetUserDynamics(uid int, page int) (map[string]interface{}, err
 		params.Set("offset_dynamic_id", strconv.Itoa(page))
 	}
 
-	return c.get("/x/polymer/web-dynamic/v1/feed/space", params)
+	return c.wbiGet("/x/polymer/web-dynamic/v1/feed/space", params)
 }
 
 // GetUserCollections fetches a user's series/collection list.
 func (c *Client) GetUserCollections(uid int) (map[string]interface{}, error) {
 	params := url.Values{}
-	params.Set("type", "1")
-	params.Set("biz_id", strconv.Itoa(uid))
+	params.Set("mid", strconv.Itoa(uid))
+	params.Set("page_num", "1")
+	params.Set("page_size", "30")
+	params.Set("web_location", "333.999")
 
-	return c.get("/x/web-interface/meta", params)
+	referer := fmt.Sprintf("https://space.bilibili.com/%d", uid)
+	return c.wbiGetWithReferer("/x/polymer/web-space/home/seasons_series", params, referer)
 }
 
 // Helper functions for parsing JSON
