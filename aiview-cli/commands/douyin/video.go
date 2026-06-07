@@ -20,16 +20,24 @@ Examples:
   aiview douyin video https://www.douyin.com/video/123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getClient()
 			format := GetOutputFormat(cmd)
-			if format == output.FormatJSON || format == output.FormatYAML {
-				return output.EmitSuccess(map[string]interface{}{
-					"note":      "Video details require login. Use --cookie to authenticate.",
-					"share_url": args[0],
-				}, format)
+
+			result, err := client.GetVideoInfo(args[0])
+			if err != nil {
+				output.EmitError("api_error", fmt.Sprintf("Failed to get video info: %v", err), format)
+				return err
 			}
+
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(result, format)
+			}
+
 			fmt.Printf("🎬 Douyin Video\n\n")
 			fmt.Printf("  URL: %s\n", args[0])
-			fmt.Printf("  Note: Video details require login\n")
+			if note, ok := result["note"].(string); ok && note != "" {
+				fmt.Printf("  Note: %s\n", note)
+			}
 			fmt.Printf("  Use: aiview douyin login --cookie <cookie>\n")
 			return nil
 		},

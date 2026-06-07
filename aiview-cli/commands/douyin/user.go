@@ -20,16 +20,24 @@ Examples:
   aiview douyin user 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getClient()
 			format := GetOutputFormat(cmd)
-			if format == output.FormatJSON || format == output.FormatYAML {
-				return output.EmitSuccess(map[string]interface{}{
-					"note": "User details require login. Use --cookie to authenticate.",
-					"uid":  args[0],
-				}, format)
+
+			result, err := client.GetUserInfo(args[0])
+			if err != nil {
+				output.EmitError("api_error", fmt.Sprintf("Failed to get user info: %v", err), format)
+				return err
 			}
+
+			if format == output.FormatJSON || format == output.FormatYAML {
+				return output.EmitSuccess(result, format)
+			}
+
 			fmt.Printf("👤 Douyin User\n\n")
 			fmt.Printf("  UID: %s\n", args[0])
-			fmt.Printf("  Note: User details require login\n")
+			if note, ok := result["note"].(string); ok && note != "" {
+				fmt.Printf("  Note: %s\n", note)
+			}
 			return nil
 		},
 	}

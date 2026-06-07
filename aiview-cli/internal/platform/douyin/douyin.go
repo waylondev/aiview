@@ -8,11 +8,15 @@ import (
 )
 
 // DouyinPlatform implements the platform.Platform interface for Douyin.
-type DouyinPlatform struct{}
+type DouyinPlatform struct {
+	authStore *AuthStore
+}
 
 // NewPlatform creates a new Douyin platform instance.
 func NewPlatform() *DouyinPlatform {
-	return &DouyinPlatform{}
+	return &DouyinPlatform{
+		authStore: NewAuthStore(),
+	}
 }
 
 func init() {
@@ -26,7 +30,7 @@ func (p *DouyinPlatform) Name() string {
 
 // NewClient creates a new Douyin API client.
 func (p *DouyinPlatform) NewClient(cfg *config.Config) (platform.Client, error) {
-	return NewClient(30, ""), nil
+	return p.BuildClient(), nil
 }
 
 // Commands returns all Douyin commands.
@@ -37,6 +41,7 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 		Long:  `Commands for interacting with Douyin (抖音) content.`,
 	}
 
+	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie))
 	douyinCmd.AddCommand(douyinCommands.NewHotCmd(func() douyinCommands.Client { return p.BuildClient() }))
 	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(func() douyinCommands.Client { return p.BuildClient() }))
 	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(func() douyinCommands.Client { return p.BuildClient() }))
@@ -48,5 +53,10 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 
 // BuildClient creates a client using the current credential.
 func (p *DouyinPlatform) BuildClient() *Client {
-	return NewClient(30, "")
+	return NewClient(30, p.authStore.GetCookie())
+}
+
+// SaveCookie saves the Douyin cookie to local credential storage.
+func (p *DouyinPlatform) SaveCookie(cookie string) error {
+	return p.authStore.SaveCookie(cookie)
 }

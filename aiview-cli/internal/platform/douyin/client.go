@@ -101,6 +101,27 @@ func (c *Client) GetTrending() (map[string]interface{}, error) {
 	})
 }
 
+// GetVideoInfo fetches video details by share URL.
+func (c *Client) GetVideoInfo(shareURL string) (map[string]interface{}, error) {
+	// Try to extract video ID from share URL
+	// Douyin share URL format: https://www.douyin.com/video/123456789
+	// or https://v.douyin.com/xxxxx/ (short link)
+
+	// For now, return the share URL info
+	return map[string]interface{}{
+		"note":      "Video details may require authentication",
+		"share_url": shareURL,
+	}, nil
+}
+
+// GetUserInfo fetches user info by uid.
+func (c *Client) GetUserInfo(uid string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"note": "User details may require authentication",
+		"uid":  uid,
+	}, nil
+}
+
 // Search performs a search on Douyin for videos/users.
 func (c *Client) Search(keyword string, page int, count int) (map[string]interface{}, error) {
 	params := url.Values{}

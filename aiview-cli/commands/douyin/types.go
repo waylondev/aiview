@@ -11,6 +11,8 @@ type Client interface {
 	GetHotSearch() (map[string]interface{}, error)
 	GetTrending() (map[string]interface{}, error)
 	Search(keyword string, page int, count int) (map[string]interface{}, error)
+	GetVideoInfo(shareURL string) (map[string]interface{}, error)
+	GetUserInfo(uid string) (map[string]interface{}, error)
 }
 
 // Credential holds Douyin authentication data.
