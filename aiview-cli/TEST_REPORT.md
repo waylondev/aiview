@@ -53,7 +53,7 @@
 |---------|--------|-------|
 | `hot` | ✅ | Returns trending videos list (20 items) |
 | `rank` | ✅ | Returns ranking list with --rid, --day, --type params |
-| `recommend` | ❌ | **`rate_limited`** — B站 server-side anti-scraping. Retry logic implemented but unsuccessful. |
+| `recommend` | ✅ | Fixed — used correct WBI endpoint `/x/web-interface/wbi/index/top/feed/rcmd` |
 | `feed` | ✅ | Returns dynamic feed from followed users (login required) |
 | `search <keyword>` | ✅ | Returns search results with --type user/video, --order, --duration |
 | `suggest <keyword>` | ✅ | Returns search suggestions |
@@ -118,18 +118,20 @@
 | Account | 4 | 3 | 0 | 0 | 1 |
 | User | 4 | 4 | 0 | 0 | 0 |
 | Video | 5 | 5 | 0 | 0 | 0 |
-| Discovery | 6 | 5 | 0 | 1 | 0 |
+| Discovery | 6 | 6 | 0 | 0 | 0 |
 | Collections | 6 | 4 | 1 | 0 | 1 |
 | Interaction | 5 | 0 | 1 | 0 | 4 |
 | Comment | 2 | 1 | 0 | 0 | 1 |
 | Danmaku | 2 | 1 | 0 | 0 | 1 |
 | Dynamic | 3 | 0 | 0 | 1 | 2 |
 | Audio | 3 | 2 | 0 | 0 | 1 |
-| **Total** | **40** | **25** | **2** | **2** | **11** |
+| **Total** | **40** | **26** | **2** | **1** | **11** |
 
 ### Failed Commands
-- **recommend** — `rate_limited`: B站服务器风控限制首页推荐接口
 - **dynamic (user space)** — `rate_limited`: B站服务器风控限制用户空间动态接口
+
+### Previously Failed (Now Fixed)
+- **recommend** — ✅ Fixed by using correct WBI endpoint: `/x/web-interface/wbi/index/top/feed/rcmd`
 
 ### Partially Working
 - **like** — API returns "already liked" (65006) when video was previously liked

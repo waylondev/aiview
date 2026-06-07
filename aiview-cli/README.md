@@ -51,7 +51,7 @@ aiview bilibili user 37737161
 | `feed` | View dynamic feed (login required) | ✅ Done |
 | `search <keyword>` | Search videos/users | ✅ Done |
 | `suggest <keyword>` | Get search suggestions | ✅ Done |
-| `recommend` | Get homepage recommendations | ❌ B站风控限流 |
+| `recommend` | Get homepage recommendations | ✅ Done |
 
 ### ✅ Collections & Storage
 | Command | Description | Status |
@@ -102,7 +102,6 @@ aiview bilibili user 37737161
 
 | Issue | Description | Workaround |
 |-------|-------------|------------|
-| `recommend` | B站 rates limits the homepage recommendation API to prevent scraping | Use `search` or `hot` instead |
 | `dynamic (user space)` | B站 rates limits user space dynamics API | Use `feed` for followed users' dynamics, or retry with delays |
 | `like` | Returns "already liked" (65006) if previously liked | Use `--undo` flag to unlike first |
 | `username encoding` | Chinese usernames may show garbled on Windows terminal | The JSON output contains correct Unicode data |

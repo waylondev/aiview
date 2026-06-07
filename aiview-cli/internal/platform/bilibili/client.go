@@ -989,7 +989,7 @@ func (c *Client) GetRecommendVideos(fresh bool, page int) (map[string]interface{
 
 	var lastErr error
 	for i := 0; i < 3; i++ {
-		data, err := c.wbiGet("/x/web-interface/index/top/rcmd", params)
+		data, err := c.wbiGet("/x/web-interface/wbi/index/top/feed/rcmd", params)
 		if err == nil {
 			return data, nil
 		}
