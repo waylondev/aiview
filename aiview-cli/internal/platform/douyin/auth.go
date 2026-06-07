@@ -52,3 +52,11 @@ func (a *AuthStore) GetCookie() string {
 	}
 	return cred.Cookie
 }
+
+// ClearCookie removes the stored credential from disk.
+func (a *AuthStore) ClearCookie() error {
+	if err := os.Remove(a.file); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}

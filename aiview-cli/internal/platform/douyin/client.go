@@ -101,25 +101,40 @@ func (c *Client) GetTrending() (map[string]interface{}, error) {
 	})
 }
 
-// GetVideoInfo fetches video details by share URL.
-func (c *Client) GetVideoInfo(shareURL string) (map[string]interface{}, error) {
-	// Try to extract video ID from share URL
-	// Douyin share URL format: https://www.douyin.com/video/123456789
-	// or https://v.douyin.com/xxxxx/ (short link)
-
-	// For now, return the share URL info
-	return map[string]interface{}{
-		"note":      "Video details may require authentication",
-		"share_url": shareURL,
-	}, nil
+// GetVideoDetail fetches video details by video ID.
+// API: /aweme/v1/web/aweme/detail/?aweme_id={videoID}
+func (c *Client) GetVideoDetail(videoID string) (map[string]interface{}, error) {
+	return c.get("/aweme/v1/web/aweme/detail/", url.Values{
+		"aweme_id": {videoID},
+	})
 }
 
 // GetUserInfo fetches user info by uid.
+// API: /aweme/v1/web/user/profile/other/?sec_user_id={uid}
 func (c *Client) GetUserInfo(uid string) (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"note": "User details may require authentication",
-		"uid":  uid,
-	}, nil
+	return c.get("/aweme/v1/web/user/profile/other/", url.Values{
+		"sec_user_id": {uid},
+	})
+}
+
+// GetVideoComments fetches comments for a video.
+// API: /aweme/v1/web/comment/list/?aweme_id={videoID}&cursor={cursor}&count=20
+func (c *Client) GetVideoComments(videoID string, cursor int) (map[string]interface{}, error) {
+	return c.get("/aweme/v1/web/comment/list/", url.Values{
+		"aweme_id": {videoID},
+		"cursor":   {fmt.Sprintf("%d", cursor)},
+		"count":    {"20"},
+	})
+}
+
+// GetUserPosts fetches posts by a user.
+// API: /aweme/v1/web/aweme/post/?sec_user_id={uid}&cursor={cursor}&count=20
+func (c *Client) GetUserPosts(uid string, cursor int) (map[string]interface{}, error) {
+	return c.get("/aweme/v1/web/aweme/post/", url.Values{
+		"sec_user_id": {uid},
+		"cursor":      {fmt.Sprintf("%d", cursor)},
+		"count":       {"20"},
+	})
 }
 
 // Search performs a search on Douyin for videos/users.
