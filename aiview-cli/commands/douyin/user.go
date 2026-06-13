@@ -8,7 +8,7 @@ import (
 )
 
 // NewUserCmd creates the user command.
-func NewUserCmd(getClient func() Client) *cobra.Command {
+func NewUserCmd(client Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "user <uid>",
 		Short: "View Douyin user info",
@@ -20,7 +20,6 @@ Examples:
   aiview douyin user 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			result, err := client.GetUserInfo(args[0])

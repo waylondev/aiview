@@ -1,3 +1,4 @@
+// Package output provides unified output formatting in JSON, YAML, and text modes.
 package output
 
 import (

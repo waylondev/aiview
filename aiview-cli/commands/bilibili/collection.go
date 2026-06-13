@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -45,10 +47,10 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			d := getMap(result, "data")
-			itemsLists := getMap(d, "items_lists")
-			seasonsList := getSlice(itemsLists, "seasons_list")
-			seriesList := getSlice(itemsLists, "series_list")
+			d := helper.GetMap(result, "data")
+			itemsLists := helper.GetMap(d, "items_lists")
+			seasonsList := helper.GetSlice(itemsLists, "seasons_list")
+			seriesList := helper.GetSlice(itemsLists, "series_list")
 
 			fmt.Printf("📂 Collections (UID: %d):\n\n", uid)
 			if len(seasonsList) == 0 && len(seriesList) == 0 {
@@ -59,15 +61,15 @@ Examples:
 			for _, item := range seasonsList {
 				count++
 				m := item.(map[string]interface{})
-				name := getString(m, "title")
-				total := getInt(m, "total")
+				name := helper.GetString(m, "title")
+				total := helper.GetInt(m, "total")
 				fmt.Printf("  %d. [Season] %s (%d videos)\n", count, name, total)
 			}
 			for _, item := range seriesList {
 				count++
 				m := item.(map[string]interface{})
-				name := getString(m, "title")
-				total := getInt(m, "total")
+				name := helper.GetString(m, "title")
+				total := helper.GetInt(m, "total")
 				fmt.Printf("  %d. [Series] %s (%d videos)\n", count, name, total)
 			}
 			return nil

@@ -1,3 +1,4 @@
+// Package config provides configuration loading with viper, supporting YAML files and environment variables.
 package config
 
 import (

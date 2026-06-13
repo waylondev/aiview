@@ -3,12 +3,14 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewUserPostsCmd creates the user-posts command.
-func NewUserPostsCmd(getClient func() Client) *cobra.Command {
+func NewUserPostsCmd(client Client) *cobra.Command {
 	var cursor int
 
 	cmd := &cobra.Command{
@@ -23,7 +25,6 @@ Examples:
   aiview douyin user-posts 123456789 --cursor 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			result, err := client.GetUserPosts(args[0], cursor)
@@ -36,13 +37,13 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No posts data returned")
 				return nil
 			}
 
-			posts := getSlice(data, "posts")
+			posts := helper.GetSlice(data, "posts")
 			if len(posts) == 0 {
 				fmt.Println("No posts found")
 				return nil
@@ -51,7 +52,7 @@ Examples:
 			fmt.Printf("📹 Douyin User Posts (uid: %s):\n\n", args[0])
 			for i, item := range posts {
 				m := item.(map[string]interface{})
-				desc := getString(m, "desc")
+				desc := helper.GetString(m, "desc")
 				fmt.Printf("  %2d. %s\n", i+1, desc)
 			}
 			return nil

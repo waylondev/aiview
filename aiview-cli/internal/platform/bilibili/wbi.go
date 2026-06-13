@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jackwener/aiview/internal/helper"
 )
 
 // WBIKey holds the WBI signing keys.
@@ -59,10 +61,10 @@ func getWBIKey() (*WBIKey, error) {
 		return nil, err
 	}
 
-	data := getMap(result, "data")
-	wbi := getMap(data, "wbi_img")
-	imgURL := getString(wbi, "img_url")
-	subURL := getString(wbi, "sub_url")
+	data := helper.GetMap(result, "data")
+	wbi := helper.GetMap(data, "wbi_img")
+	imgURL := helper.GetString(wbi, "img_url")
+	subURL := helper.GetString(wbi, "sub_url")
 
 	imgKey := extractKeyFromURL(imgURL)
 	subKey := extractKeyFromURL(subURL)

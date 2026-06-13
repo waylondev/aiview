@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -40,14 +42,14 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No data returned")
 				return nil
 			}
 
-			following := getInt(data, "following") == 1
-			follower := getInt(data, "follower") == 1
+			following := helper.GetInt(data, "following") == 1
+			follower := helper.GetInt(data, "follower") == 1
 
 			fmt.Printf("👥 Relation with UID %d:\n\n", uid)
 			fmt.Printf("  You follow them:  %s\n", boolMark(following))

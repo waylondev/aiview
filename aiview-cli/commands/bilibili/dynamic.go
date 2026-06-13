@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -41,8 +43,8 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			d := getMap(result, "data")
-			items := getSlice(d, "items")
+			d := helper.GetMap(result, "data")
+			items := helper.GetSlice(d, "items")
 
 			fmt.Printf("📡 Dynamics (UID: %d):\n\n", uid)
 			if len(items) == 0 {
@@ -51,12 +53,12 @@ Examples:
 			}
 			for i, item := range items {
 				m := item.(map[string]interface{})
-				modules := getMap(m, "modules")
-				author := getMap(modules, "module_author")
-				desc := getMap(getMap(modules, "module_dynamic"), "desc")
+				modules := helper.GetMap(m, "modules")
+				author := helper.GetMap(modules, "module_author")
+				desc := helper.GetMap(helper.GetMap(modules, "module_dynamic"), "desc")
 
-				name := getString(author, "name")
-				text := getString(desc, "text")
+				name := helper.GetString(author, "name")
+				text := helper.GetString(desc, "text")
 				if len(text) > 120 {
 					text = text[:120] + "..."
 				}

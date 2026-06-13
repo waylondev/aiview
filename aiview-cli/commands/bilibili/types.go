@@ -1,3 +1,4 @@
+// Package bilibili provides CLI commands for the Bilibili platform.
 package bilibili
 
 import (
@@ -7,74 +8,6 @@ import (
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
-
-// Helper functions for parsing map[string]interface{} responses.
-func getString(m map[string]interface{}, keys ...string) string {
-	if m == nil {
-		return ""
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return ""
-	}
-	if len(keys) == 1 {
-		s, _ := val.(string)
-		return s
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return ""
-	}
-	return getString(sub, keys[1:]...)
-}
-
-func getInt(m map[string]interface{}, keys ...string) int {
-	if m == nil {
-		return 0
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return 0
-	}
-	if len(keys) == 1 {
-		switch v := val.(type) {
-		case float64:
-			return int(v)
-		case int:
-			return v
-		}
-		return 0
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return 0
-	}
-	return getInt(sub, keys[1:]...)
-}
-
-func getMap(m map[string]interface{}, key string) map[string]interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.(map[string]interface{})
-	return sub
-}
-
-func getSlice(m map[string]interface{}, key string) []interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.([]interface{})
-	return sub
-}
 
 // Client is the interface that the bilibili API client must satisfy for commands.
 type Client interface {

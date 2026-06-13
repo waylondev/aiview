@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -39,14 +41,14 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No data returned")
 				return nil
 			}
 
-			total := getInt(data, "total")
-			webOnline := getInt(data, "count")
+			total := helper.GetInt(data, "total")
+			webOnline := helper.GetInt(data, "count")
 
 			fmt.Printf("📺 Online Viewers: %s\n\n", bvid)
 			fmt.Printf("  Total viewers:   %d\n", total)

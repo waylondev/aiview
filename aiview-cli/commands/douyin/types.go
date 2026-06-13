@@ -1,3 +1,4 @@
+// Package douyin provides CLI commands for the Douyin (抖音) platform.
 package douyin
 
 import (
@@ -15,81 +16,11 @@ type Client interface {
 	GetVideoComments(videoID string, cursor int) (map[string]interface{}, error)
 	GetUserPosts(uid string, cursor int) (map[string]interface{}, error)
 	GetUserInfo(uid string) (map[string]interface{}, error)
-	Status() (map[string]interface{}, error)
-	Logout() error
 }
 
 // Credential holds Douyin authentication data.
 type Credential struct {
 	Cookie string `json:"cookie"`
-}
-
-// Helper functions for parsing map responses
-func getString(m map[string]interface{}, keys ...string) string {
-	if m == nil {
-		return ""
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return ""
-	}
-	if len(keys) == 1 {
-		s, _ := val.(string)
-		return s
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return ""
-	}
-	return getString(sub, keys[1:]...)
-}
-
-func getInt(m map[string]interface{}, keys ...string) int {
-	if m == nil {
-		return 0
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return 0
-	}
-	if len(keys) == 1 {
-		switch v := val.(type) {
-		case float64:
-			return int(v)
-		case int:
-			return v
-		}
-		return 0
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return 0
-	}
-	return getInt(sub, keys[1:]...)
-}
-
-func getMap(m map[string]interface{}, key string) map[string]interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.(map[string]interface{})
-	return sub
-}
-
-func getSlice(m map[string]interface{}, key string) []interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.([]interface{})
-	return sub
 }
 
 // GetOutputFormat extracts the output format from cobra command flags.

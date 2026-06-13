@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -72,8 +74,8 @@ func NewCommentCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 			}
 
 			// Parse and display
-			d := getMap(data, "data")
-			replies := getSlice(d, "replies")
+			d := helper.GetMap(data, "data")
+			replies := helper.GetSlice(d, "replies")
 
 			if sort == 2 {
 				fmt.Println("💬 Hot Comments:")
@@ -88,12 +90,12 @@ func NewCommentCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 
 			for i, r := range replies {
 				m := r.(map[string]interface{})
-				member := getMap(m, "member")
-				content := getMap(m, "content")
-				name := getString(member, "uname")
-				msg := getString(content, "message")
-				like := getInt(m, "like")
-				rpid := getInt(m, "rpid")
+				member := helper.GetMap(m, "member")
+				content := helper.GetMap(m, "content")
+				name := helper.GetString(member, "uname")
+				msg := helper.GetString(content, "message")
+				like := helper.GetInt(m, "like")
+				rpid := helper.GetInt(m, "rpid")
 
 				fmt.Printf("  %d. %s (👍 %d)\n", i+1, name, like)
 				fmt.Printf("     ID: %d\n", rpid)

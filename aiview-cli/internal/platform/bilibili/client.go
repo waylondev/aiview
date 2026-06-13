@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jackwener/aiview/internal/helper"
 )
 
 const (
@@ -127,9 +129,9 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, err
 		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
-	code := getInt(result, "code")
+	code := helper.GetInt(result, "code")
 	if code != 0 {
-		msg := getString(result, "message")
+		msg := helper.GetString(result, "message")
 		if code == -101 || code == -111 {
 			return nil, fmt.Errorf("not_authenticated: %s", msg)
 		}
@@ -174,9 +176,9 @@ func (c *Client) post(path string, params url.Values) (map[string]interface{}, e
 		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
-	code := getInt(result, "code")
+	code := helper.GetInt(result, "code")
 	if code != 0 {
-		msg := getString(result, "message")
+		msg := helper.GetString(result, "message")
 		if code == -101 || code == -111 {
 			return nil, fmt.Errorf("not_authenticated: %s", msg)
 		}
@@ -202,30 +204,30 @@ func (c *Client) GetVideoInfo(bvid string) (*VideoInfo, error) {
 		return nil, err
 	}
 
-	info := getMap(data, "data")
-	owner := getMap(info, "owner")
-	stat := getMap(info, "stat")
+	info := helper.GetMap(data, "data")
+	owner := helper.GetMap(info, "owner")
+	stat := helper.GetMap(info, "stat")
 
 	return &VideoInfo{
 		BVID:        bvid,
-		AID:         getInt(info, "aid"),
-		CID:         getInt(info, "cid"),
-		Title:       getString(info, "title"),
-		Description: strings.TrimSpace(getString(info, "desc")),
-		Duration:    getInt(info, "duration"),
-		DurationStr: formatDuration(getInt(info, "duration")),
+		AID:         helper.GetInt(info, "aid"),
+		CID:         helper.GetInt(info, "cid"),
+		Title:       helper.GetString(info, "title"),
+		Description: strings.TrimSpace(helper.GetString(info, "desc")),
+		Duration:    helper.GetInt(info, "duration"),
+		DurationStr: formatDuration(helper.GetInt(info, "duration")),
 		URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", bvid),
 		Owner: OwnerInfo{
-			MID:  getInt(owner, "mid"),
-			Name: getString(owner, "name"),
+			MID:  helper.GetInt(owner, "mid"),
+			Name: helper.GetString(owner, "name"),
 		},
 		Stats: VideoStats{
-			View:     getInt(stat, "view"),
-			Danmaku:  getInt(stat, "danmaku"),
-			Like:     getInt(stat, "like"),
-			Coin:     getInt(stat, "coin"),
-			Favorite: getInt(stat, "favorite"),
-			Share:    getInt(stat, "share"),
+			View:     helper.GetInt(stat, "view"),
+			Danmaku:  helper.GetInt(stat, "danmaku"),
+			Like:     helper.GetInt(stat, "like"),
+			Coin:     helper.GetInt(stat, "coin"),
+			Favorite: helper.GetInt(stat, "favorite"),
+			Share:    helper.GetInt(stat, "share"),
 		},
 	}, nil
 }
@@ -246,9 +248,9 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	data := getMap(playerData, "data")
-	subtitle := getMap(data, "subtitle")
-	subtitles := getSlice(subtitle, "subtitles")
+	data := helper.GetMap(playerData, "data")
+	subtitle := helper.GetMap(data, "subtitle")
+	subtitles := helper.GetSlice(subtitle, "subtitles")
 
 	if len(subtitles) == 0 {
 		return &SubtitleInfo{Available: false}, nil
@@ -258,15 +260,15 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 	var subtitleURL string
 	for _, sub := range subtitles {
 		s := sub.(map[string]interface{})
-		lan := getString(s, "lan")
+		lan := helper.GetString(s, "lan")
 		if strings.Contains(strings.ToLower(lan), "zh") {
-			subtitleURL = getString(s, "subtitle_url")
+			subtitleURL = helper.GetString(s, "subtitle_url")
 			break
 		}
 	}
 	if subtitleURL == "" {
 		s := subtitles[0].(map[string]interface{})
-		subtitleURL = getString(s, "subtitle_url")
+		subtitleURL = helper.GetString(s, "subtitle_url")
 	}
 
 	if subtitleURL == "" {
@@ -300,12 +302,12 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 		return nil, err
 	}
 
-	rawItems := getSlice(subData, "body")
+	rawItems := helper.GetSlice(subData, "body")
 	items := make([]SubtitleItem, 0, len(rawItems))
 	var texts []string
 	for _, item := range rawItems {
 		m := item.(map[string]interface{})
-		content := getString(m, "content")
+		content := helper.GetString(m, "content")
 		texts = append(texts, content)
 		items = append(items, SubtitleItem{
 			From:    getFloat(m, "from"),
@@ -338,9 +340,9 @@ func (c *Client) GetVideoAIConclusion(bvid string) (string, error) {
 		return "", err
 	}
 
-	d := getMap(data, "data")
-	ai := getMap(d, "ai_summary")
-	return getString(ai, "summary"), nil
+	d := helper.GetMap(data, "data")
+	ai := helper.GetMap(d, "ai_summary")
+	return helper.GetString(ai, "summary"), nil
 }
 
 // GetVideoComments fetches video comments.
@@ -362,22 +364,22 @@ func (c *Client) GetVideoComments(bvid string, page int) ([]CommentInfo, error) 
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	replies := getSlice(d, "replies")
+	d := helper.GetMap(data, "data")
+	replies := helper.GetSlice(d, "replies")
 
 	comments := make([]CommentInfo, 0, len(replies))
 	for _, r := range replies {
 		m := r.(map[string]interface{})
-		member := getMap(m, "member")
-		content := getMap(m, "content")
+		member := helper.GetMap(m, "member")
+		content := helper.GetMap(m, "content")
 		comments = append(comments, CommentInfo{
-			ID: getString(m, "rpid_str"),
+			ID: helper.GetString(m, "rpid_str"),
 			Author: AuthorInfo{
-				MID:  getInt(member, "mid"),
-				Name: getString(member, "uname"),
+				MID:  helper.GetInt(member, "mid"),
+				Name: helper.GetString(member, "uname"),
 			},
-			Message: getString(content, "message"),
-			Like:    getInt(m, "like"),
+			Message: helper.GetString(content, "message"),
+			Like:    helper.GetInt(m, "like"),
 		})
 	}
 	return comments, nil
@@ -393,24 +395,24 @@ func (c *Client) GetRelatedVideos(bvid string) ([]VideoInfo, error) {
 		return nil, err
 	}
 
-	items := getSlice(data, "data")
+	items := helper.GetSlice(data, "data")
 	videos := make([]VideoInfo, 0, len(items))
 	for _, item := range items {
 		m := item.(map[string]interface{})
-		owner := getMap(m, "owner")
-		stat := getMap(m, "stat")
+		owner := helper.GetMap(m, "owner")
+		stat := helper.GetMap(m, "stat")
 		videos = append(videos, VideoInfo{
-			BVID:        getString(m, "bvid"),
-			Title:       getString(m, "title"),
-			Duration:    getInt(m, "duration"),
-			DurationStr: formatDuration(getInt(m, "duration")),
-			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
+			BVID:        helper.GetString(m, "bvid"),
+			Title:       helper.GetString(m, "title"),
+			Duration:    helper.GetInt(m, "duration"),
+			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
-				MID:  getInt(owner, "mid"),
-				Name: getString(owner, "name"),
+				MID:  helper.GetInt(owner, "mid"),
+				Name: helper.GetString(owner, "name"),
 			},
 			Stats: VideoStats{
-				View: getInt(stat, "view"),
+				View: helper.GetInt(stat, "view"),
 			},
 		})
 	}
@@ -438,18 +440,18 @@ func (c *Client) SearchVideo(keyword string, page int, order string, duration in
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	items := getSlice(d, "result")
+	d := helper.GetMap(data, "data")
+	items := helper.GetSlice(d, "result")
 
 	results := make([]SearchVideoResult, 0, len(items))
 	for _, item := range items {
 		m := item.(map[string]interface{})
 		results = append(results, SearchVideoResult{
-			BVID:     getString(m, "bvid"),
-			Title:    stripHTML(getString(m, "title")),
-			Author:   getString(m, "author"),
-			Play:     getInt(m, "play"),
-			Duration: getString(m, "duration"),
+			BVID:     helper.GetString(m, "bvid"),
+			Title:    stripHTML(helper.GetString(m, "title")),
+			Author:   helper.GetString(m, "author"),
+			Play:     helper.GetInt(m, "play"),
+			Duration: helper.GetString(m, "duration"),
 		})
 	}
 	return results, nil
@@ -467,18 +469,18 @@ func (c *Client) SearchUser(keyword string, page int) ([]SearchUserResult, error
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	items := getSlice(d, "result")
+	d := helper.GetMap(data, "data")
+	items := helper.GetSlice(d, "result")
 
 	results := make([]SearchUserResult, 0, len(items))
 	for _, item := range items {
 		m := item.(map[string]interface{})
 		results = append(results, SearchUserResult{
-			MID:    getInt(m, "mid"),
-			Name:   getString(m, "uname"),
-			Sign:   getString(m, "usign"),
-			Fans:   getInt(m, "fans"),
-			Videos: getInt(m, "videos"),
+			MID:    helper.GetInt(m, "mid"),
+			Name:   helper.GetString(m, "uname"),
+			Sign:   helper.GetString(m, "usign"),
+			Fans:   helper.GetInt(m, "fans"),
+			Videos: helper.GetInt(m, "videos"),
 		})
 	}
 	return results, nil
@@ -495,16 +497,16 @@ func (c *Client) GetUserInfo(uid int) (*UserInfo, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	card := getMap(d, "card")
+	d := helper.GetMap(data, "data")
+	card := helper.GetMap(d, "card")
 	return &UserInfo{
-		MID:       getInt(card, "mid"),
-		Name:      getString(card, "name"),
-		Level:     getInt(card, "level_info", "current_level"),
-		Coins:     getInt(card, "coins"),
-		Sign:      getString(card, "sign"),
-		Fans:      getInt(card, "fans"),
-		Following: getInt(card, "attention"),
+		MID:       helper.GetInt(card, "mid"),
+		Name:      helper.GetString(card, "name"),
+		Level:     helper.GetInt(card, "level_info", "current_level"),
+		Coins:     helper.GetInt(card, "coins"),
+		Sign:      helper.GetString(card, "sign"),
+		Fans:      helper.GetInt(card, "fans"),
+		Following: helper.GetInt(card, "attention"),
 	}, nil
 }
 
@@ -523,21 +525,21 @@ func (c *Client) GetUserVideos(uid int, count int, order string, tid int, keywor
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getMap(d, "list")
-	vlist := getSlice(list, "vlist")
+	d := helper.GetMap(data, "data")
+	list := helper.GetMap(d, "list")
+	vlist := helper.GetSlice(list, "vlist")
 
 	videos := make([]VideoInfo, 0, len(vlist))
 	for _, v := range vlist {
 		m := v.(map[string]interface{})
 		videos = append(videos, VideoInfo{
-			BVID:        getString(m, "bvid"),
-			Title:       getString(m, "title"),
-			Duration:    getInt(m, "length"),
-			DurationStr: formatDuration(getInt(m, "length")),
-			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
+			BVID:        helper.GetString(m, "bvid"),
+			Title:       helper.GetString(m, "title"),
+			Duration:    helper.GetInt(m, "length"),
+			DurationStr: formatDuration(helper.GetInt(m, "length")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Stats: VideoStats{
-				View: getInt(m, "play"),
+				View: helper.GetInt(m, "play"),
 			},
 		})
 		if len(videos) >= count {
@@ -558,26 +560,26 @@ func (c *Client) GetHotVideos(page int, count int) ([]VideoInfo, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	videos := make([]VideoInfo, 0, len(list))
 	for _, v := range list {
 		m := v.(map[string]interface{})
-		owner := getMap(m, "owner")
-		stat := getMap(m, "stat")
+		owner := helper.GetMap(m, "owner")
+		stat := helper.GetMap(m, "stat")
 		videos = append(videos, VideoInfo{
-			BVID:        getString(m, "bvid"),
-			Title:       getString(m, "title"),
-			Duration:    getInt(m, "duration"),
-			DurationStr: formatDuration(getInt(m, "duration")),
-			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
+			BVID:        helper.GetString(m, "bvid"),
+			Title:       helper.GetString(m, "title"),
+			Duration:    helper.GetInt(m, "duration"),
+			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
-				MID:  getInt(owner, "mid"),
-				Name: getString(owner, "name"),
+				MID:  helper.GetInt(owner, "mid"),
+				Name: helper.GetString(owner, "name"),
 			},
 			Stats: VideoStats{
-				View: getInt(stat, "view"),
+				View: helper.GetInt(stat, "view"),
 			},
 		})
 	}
@@ -595,26 +597,26 @@ func (c *Client) GetRankVideos(rid int, day int, typeStr string) ([]VideoInfo, e
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	videos := make([]VideoInfo, 0, len(list))
 	for _, v := range list {
 		m := v.(map[string]interface{})
-		owner := getMap(m, "owner")
-		stat := getMap(m, "stat")
+		owner := helper.GetMap(m, "owner")
+		stat := helper.GetMap(m, "stat")
 		videos = append(videos, VideoInfo{
-			BVID:        getString(m, "bvid"),
-			Title:       getString(m, "title"),
-			Duration:    getInt(m, "duration"),
-			DurationStr: formatDuration(getInt(m, "duration")),
-			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", getString(m, "bvid")),
+			BVID:        helper.GetString(m, "bvid"),
+			Title:       helper.GetString(m, "title"),
+			Duration:    helper.GetInt(m, "duration"),
+			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
-				MID:  getInt(owner, "mid"),
-				Name: getString(owner, "name"),
+				MID:  helper.GetInt(owner, "mid"),
+				Name: helper.GetString(owner, "name"),
 			},
 			Stats: VideoStats{
-				View: getInt(stat, "view"),
+				View: helper.GetInt(stat, "view"),
 			},
 		})
 	}
@@ -631,16 +633,16 @@ func (c *Client) GetFavoriteList(uid int, page int) ([]FavoriteFolder, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	folders := make([]FavoriteFolder, 0, len(list))
 	for _, f := range list {
 		m := f.(map[string]interface{})
 		folders = append(folders, FavoriteFolder{
-			ID:         getInt(m, "id"),
-			Title:      getString(m, "title"),
-			MediaCount: getInt(m, "media_count"),
+			ID:         helper.GetInt(m, "id"),
+			Title:      helper.GetString(m, "title"),
+			MediaCount: helper.GetInt(m, "media_count"),
 		})
 	}
 	return folders, nil
@@ -658,18 +660,18 @@ func (c *Client) GetFavoriteVideos(favID int, page int) ([]FavoriteMedia, error)
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	medias := getSlice(d, "medias")
+	d := helper.GetMap(data, "data")
+	medias := helper.GetSlice(d, "medias")
 
 	items := make([]FavoriteMedia, 0, len(medias))
 	for _, m := range medias {
 		item := m.(map[string]interface{})
-		upper := getMap(item, "upper")
+		upper := helper.GetMap(item, "upper")
 		items = append(items, FavoriteMedia{
-			BVID:     getString(item, "bvid"),
-			Title:    getString(item, "title"),
-			Duration: formatDuration(getInt(item, "duration")),
-			Upper:    getString(upper, "name"),
+			BVID:     helper.GetString(item, "bvid"),
+			Title:    helper.GetString(item, "title"),
+			Duration: formatDuration(helper.GetInt(item, "duration")),
+			Upper:    helper.GetString(upper, "name"),
 		})
 	}
 	return items, nil
@@ -687,16 +689,16 @@ func (c *Client) GetFollowingList(uid int, page int) ([]FollowingUser, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	users := make([]FollowingUser, 0, len(list))
 	for _, u := range list {
 		m := u.(map[string]interface{})
 		users = append(users, FollowingUser{
-			MID:  getInt(m, "mid"),
-			Name: getString(m, "uname"),
-			Sign: getString(m, "sign"),
+			MID:  helper.GetInt(m, "mid"),
+			Name: helper.GetString(m, "uname"),
+			Sign: helper.GetString(m, "sign"),
 		})
 	}
 	return users, nil
@@ -713,16 +715,16 @@ func (c *Client) GetWatchHistory(page int, count int) ([]HistoryItem, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	items := make([]HistoryItem, 0, len(list))
 	for _, h := range list {
 		m := h.(map[string]interface{})
 		items = append(items, HistoryItem{
-			BVID:   getString(m, "bvid"),
-			Title:  getString(m, "title"),
-			Author: getString(m, "author_name"),
+			BVID:   helper.GetString(m, "bvid"),
+			Title:  helper.GetString(m, "title"),
+			Author: helper.GetString(m, "author_name"),
 		})
 	}
 	return items, nil
@@ -738,18 +740,18 @@ func (c *Client) GetWatchLater() ([]WatchLaterItem, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	list := getSlice(d, "list")
+	d := helper.GetMap(data, "data")
+	list := helper.GetSlice(d, "list")
 
 	items := make([]WatchLaterItem, 0, len(list))
 	for _, w := range list {
 		m := w.(map[string]interface{})
-		owner := getMap(m, "owner")
+		owner := helper.GetMap(m, "owner")
 		items = append(items, WatchLaterItem{
-			BVID:     getString(m, "bvid"),
-			Title:    getString(m, "title"),
-			Author:   getString(owner, "name"),
-			Duration: formatDuration(getInt(m, "duration")),
+			BVID:     helper.GetString(m, "bvid"),
+			Title:    helper.GetString(m, "title"),
+			Author:   helper.GetString(owner, "name"),
+			Duration: formatDuration(helper.GetInt(m, "duration")),
 		})
 	}
 	return items, nil
@@ -768,20 +770,20 @@ func (c *Client) GetDynamicFeed(offset string) ([]DynamicItem, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
-	items := getSlice(d, "items")
+	d := helper.GetMap(data, "data")
+	items := helper.GetSlice(d, "items")
 
 	dynamics := make([]DynamicItem, 0, len(items))
 	for _, item := range items {
 		m := item.(map[string]interface{})
-		modules := getMap(m, "modules")
-		author := getMap(modules, "module_author")
-		desc := getMap(getMap(modules, "module_dynamic"), "desc")
+		modules := helper.GetMap(m, "modules")
+		author := helper.GetMap(modules, "module_author")
+		desc := helper.GetMap(helper.GetMap(modules, "module_dynamic"), "desc")
 
 		dynamics = append(dynamics, DynamicItem{
-			ID:     getString(m, "id_str"),
-			Author: getString(author, "name"),
-			Text:   getString(desc, "text"),
+			ID:     helper.GetString(m, "id_str"),
+			Author: helper.GetString(author, "name"),
+			Text:   helper.GetString(desc, "text"),
 		})
 	}
 	return dynamics, nil
@@ -839,16 +841,16 @@ func (c *Client) GetSelfInfo() (*UserInfo, error) {
 		return nil, err
 	}
 
-	d := getMap(data, "data")
+	d := helper.GetMap(data, "data")
 	if !getBool(d, "isLogin") {
 		return nil, fmt.Errorf("not_authenticated: not logged in")
 	}
 
 	return &UserInfo{
-		MID:   getInt(d, "mid"),
-		Name:  getString(d, "uname"),
-		Level: getInt(d, "level_info", "current_level"),
-		Coins: getInt(d, "money"),
+		MID:   helper.GetInt(d, "mid"),
+		Name:  helper.GetString(d, "uname"),
+		Level: helper.GetInt(d, "level_info", "current_level"),
+		Coins: helper.GetInt(d, "money"),
 	}, nil
 }
 
@@ -871,9 +873,9 @@ func (c *Client) GetAudioURL(bvid string) (string, error) {
 		return "", err
 	}
 
-	d := getMap(data, "data")
-	dash := getMap(d, "dash")
-	audio := getSlice(dash, "audio")
+	d := helper.GetMap(data, "data")
+	dash := helper.GetMap(d, "dash")
+	audio := helper.GetSlice(dash, "audio")
 
 	if len(audio) == 0 {
 		return "", fmt.Errorf("not_found: unable to get audio stream")
@@ -881,7 +883,7 @@ func (c *Client) GetAudioURL(bvid string) (string, error) {
 
 	// Get the best quality audio
 	best := audio[0].(map[string]interface{})
-	return getString(best, "baseUrl"), nil
+	return helper.GetString(best, "baseUrl"), nil
 }
 
 // PostComment posts a comment on a video.
@@ -1132,54 +1134,6 @@ func (c *Client) GetWeeklyHotVideos(number int) (map[string]interface{}, error) 
 	return c.wbiGet("/x/web-interface/popular/series/one", params)
 }
 
-// Helper functions for parsing JSON
-
-func getString(m map[string]interface{}, keys ...string) string {
-	if m == nil {
-		return ""
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return ""
-	}
-	if len(keys) == 1 {
-		s, _ := val.(string)
-		return s
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return ""
-	}
-	return getString(sub, keys[1:]...)
-}
-
-func getInt(m map[string]interface{}, keys ...string) int {
-	if m == nil {
-		return 0
-	}
-	val, ok := m[keys[0]]
-	if !ok {
-		return 0
-	}
-	if len(keys) == 1 {
-		switch v := val.(type) {
-		case float64:
-			return int(v)
-		case int:
-			return v
-		case string:
-			n, _ := strconv.Atoi(v)
-			return n
-		}
-		return 0
-	}
-	sub, ok := val.(map[string]interface{})
-	if !ok {
-		return 0
-	}
-	return getInt(sub, keys[1:]...)
-}
-
 func getFloat(m map[string]interface{}, key string) float64 {
 	if m == nil {
 		return 0
@@ -1207,30 +1161,6 @@ func getBool(m map[string]interface{}, key string) bool {
 	}
 	b, _ := val.(bool)
 	return b
-}
-
-func getMap(m map[string]interface{}, key string) map[string]interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.(map[string]interface{})
-	return sub
-}
-
-func getSlice(m map[string]interface{}, key string) []interface{} {
-	if m == nil {
-		return nil
-	}
-	val, ok := m[key]
-	if !ok {
-		return nil
-	}
-	sub, _ := val.([]interface{})
-	return sub
 }
 
 func formatDuration(seconds int) string {

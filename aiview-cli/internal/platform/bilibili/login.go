@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/jackwener/aiview/internal/helper"
 )
 
 // QRLoginState represents the QR code login state.
@@ -51,15 +53,15 @@ func GenerateQRCode() (*QRLoginSession, error) {
 		return nil, fmt.Errorf("Failed to parse QR code response: %w", err)
 	}
 
-	code := getInt(result, "code")
+	code := helper.GetInt(result, "code")
 	if code != 0 {
-		return nil, fmt.Errorf("Failed to generate QR code [%d]: %s", code, getString(result, "message"))
+		return nil, fmt.Errorf("Failed to generate QR code [%d]: %s", code, helper.GetString(result, "message"))
 	}
 
-	data := getMap(result, "data")
+	data := helper.GetMap(result, "data")
 	return &QRLoginSession{
-		QRCodeKey: getString(data, "qrcode_key"),
-		QRCodeURL: getString(data, "url"),
+		QRCodeKey: helper.GetString(data, "qrcode_key"),
+		QRCodeURL: helper.GetString(data, "url"),
 	}, nil
 }
 
@@ -89,8 +91,8 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 		return QRLoginPending, nil, fmt.Errorf("Failed to parse poll response: %w", err)
 	}
 
-	data := getMap(result, "data")
-	code := getInt(data, "code")
+	data := helper.GetMap(result, "data")
+	code := helper.GetInt(data, "code")
 
 	switch code {
 	case 0:
@@ -104,7 +106,7 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 	case 86101:
 		return QRLoginPending, nil, nil
 	default:
-		msg := getString(data, "message")
+		msg := helper.GetString(data, "message")
 		return QRLoginPending, nil, fmt.Errorf("QR code login error [%d]: %s", code, msg)
 	}
 }

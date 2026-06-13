@@ -8,7 +8,7 @@ import (
 )
 
 // NewLogoutCmd creates the logout command.
-func NewLogoutCmd(getClient func() Client) *cobra.Command {
+func NewLogoutCmd(logoutFn func() error) *cobra.Command {
 	return &cobra.Command{
 		Use:   "logout",
 		Short: "Logout from Douyin",
@@ -18,10 +18,9 @@ Examples:
   aiview douyin logout`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
-			if err := client.Logout(); err != nil {
+			if err := logoutFn(); err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to logout: %v", err), format)
 				return err
 			}

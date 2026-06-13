@@ -3,12 +3,14 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewSearchCmd creates the search command.
-func NewSearchCmd(getClient func() Client) *cobra.Command {
+func NewSearchCmd(client Client) *cobra.Command {
 	var (
 		page  int
 		count int
@@ -24,7 +26,6 @@ Examples:
   aiview douyin search music --page 2 --count 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 			keyword := args[0]
 
@@ -38,7 +39,7 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No results found")
 				return nil

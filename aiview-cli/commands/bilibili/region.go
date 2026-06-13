@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -61,13 +63,13 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No data returned")
 				return nil
 			}
 
-			archives := getSlice(data, "archives")
+			archives := helper.GetSlice(data, "archives")
 			if len(archives) == 0 {
 				fmt.Printf("No videos found in region %d\n", rid)
 				return nil
@@ -76,12 +78,12 @@ Examples:
 			fmt.Printf("📂 Region %d Videos:\n\n", rid)
 			for i, item := range archives {
 				m := item.(map[string]interface{})
-				owner := getMap(m, "owner")
-				stat := getMap(m, "stat")
-				bvid := getString(m, "bvid")
-				title := getString(m, "title")
-				author := getString(owner, "name")
-				views := getInt(stat, "view")
+				owner := helper.GetMap(m, "owner")
+				stat := helper.GetMap(m, "stat")
+				bvid := helper.GetString(m, "bvid")
+				title := helper.GetString(m, "title")
+				author := helper.GetString(owner, "name")
+				views := helper.GetInt(stat, "view")
 
 				fmt.Printf("  %d. [%s] %s\n", i+1, bvid, title)
 				fmt.Printf("     Uploader: %s  Views: %d\n\n", author, views)

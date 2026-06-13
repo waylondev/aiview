@@ -9,7 +9,9 @@ import (
 
 // DouyinPlatform implements the platform.Platform interface for Douyin.
 type DouyinPlatform struct {
-	authStore *AuthStore
+	authStore    *AuthStore
+	config       *config.Config
+	cachedClient *Client
 }
 
 // NewPlatform creates a new Douyin platform instance.
@@ -30,7 +32,8 @@ func (p *DouyinPlatform) Name() string {
 
 // NewClient creates a new Douyin API client.
 func (p *DouyinPlatform) NewClient(cfg *config.Config) (platform.Client, error) {
-	return p.BuildClient(), nil
+	p.config = cfg
+	return p.getClient(), nil
 }
 
 // Commands returns all Douyin commands.
@@ -41,23 +44,32 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 		Long:  `Commands for interacting with Douyin (抖音) content.`,
 	}
 
+	c := p.getClient()
 	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie))
-	douyinCmd.AddCommand(douyinCommands.NewHotCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewVideoCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewUserCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewCommentCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewUserPostsCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewStatusCmd(func() douyinCommands.Client { return p }))
-	douyinCmd.AddCommand(douyinCommands.NewLogoutCmd(func() douyinCommands.Client { return p }))
+	douyinCmd.AddCommand(douyinCommands.NewHotCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewVideoCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewUserCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewCommentCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewUserPostsCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewStatusCmd(func() (map[string]interface{}, error) { return p.Status() }))
+	douyinCmd.AddCommand(douyinCommands.NewLogoutCmd(func() error { return p.Logout() }))
 
 	return []*cobra.Command{douyinCmd}
 }
 
-// BuildClient creates a client using the current credential.
-func (p *DouyinPlatform) BuildClient() *Client {
-	return NewClient(30, p.authStore.GetCookie())
+// getClient lazily creates and caches a client using the current credential and config timeout.
+func (p *DouyinPlatform) getClient() *Client {
+	if p.cachedClient != nil {
+		return p.cachedClient
+	}
+	timeout := 30
+	if p.config != nil && p.config.Platforms.Douyin.Timeout > 0 {
+		timeout = p.config.Platforms.Douyin.Timeout
+	}
+	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	return p.cachedClient
 }
 
 // SaveCookie saves the Douyin cookie to local credential storage.
@@ -78,46 +90,4 @@ func (p *DouyinPlatform) Status() (map[string]interface{}, error) {
 // Logout clears the stored credential.
 func (p *DouyinPlatform) Logout() error {
 	return p.authStore.ClearCookie()
-}
-
-// --- commands/douyin.Client interface delegation ---
-
-// PlatformName returns the platform name.
-func (p *DouyinPlatform) PlatformName() string {
-	return p.BuildClient().PlatformName()
-}
-
-// GetHotSearch fetches hot/douyin trending search terms.
-func (p *DouyinPlatform) GetHotSearch() (map[string]interface{}, error) {
-	return p.BuildClient().GetHotSearch()
-}
-
-// GetTrending fetches the trending/challenge list.
-func (p *DouyinPlatform) GetTrending() (map[string]interface{}, error) {
-	return p.BuildClient().GetTrending()
-}
-
-// Search performs a search on Douyin for videos/users.
-func (p *DouyinPlatform) Search(keyword string, page int, count int) (map[string]interface{}, error) {
-	return p.BuildClient().Search(keyword, page, count)
-}
-
-// GetVideoDetail fetches video details by video ID.
-func (p *DouyinPlatform) GetVideoDetail(videoID string) (map[string]interface{}, error) {
-	return p.BuildClient().GetVideoDetail(videoID)
-}
-
-// GetVideoComments fetches comments for a video.
-func (p *DouyinPlatform) GetVideoComments(videoID string, cursor int) (map[string]interface{}, error) {
-	return p.BuildClient().GetVideoComments(videoID, cursor)
-}
-
-// GetUserPosts fetches posts by a user.
-func (p *DouyinPlatform) GetUserPosts(uid string, cursor int) (map[string]interface{}, error) {
-	return p.BuildClient().GetUserPosts(uid, cursor)
-}
-
-// GetUserInfo fetches user info by uid.
-func (p *DouyinPlatform) GetUserInfo(uid string) (map[string]interface{}, error) {
-	return p.BuildClient().GetUserInfo(uid)
 }

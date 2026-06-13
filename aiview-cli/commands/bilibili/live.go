@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -45,17 +47,17 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
-			if data == nil || getInt(data, "room_id") == 0 {
+			data := helper.GetMap(result, "data")
+			if data == nil || helper.GetInt(data, "room_id") == 0 {
 				fmt.Printf("No live room found for ID %d\n", roomID)
 				return nil
 			}
 
-			title := getString(data, "title")
-			status := getInt(data, "live_status")
-			online := getInt(data, "online")
-			uname := getString(data, "uname")
-			actualRoomID := getInt(data, "room_id")
+			title := helper.GetString(data, "title")
+			status := helper.GetInt(data, "live_status")
+			online := helper.GetInt(data, "online")
+			uname := helper.GetString(data, "uname")
+			actualRoomID := helper.GetInt(data, "room_id")
 
 			statusStr := "Offline"
 			if status == 1 {

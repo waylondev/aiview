@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -34,8 +36,8 @@ func NewTagsCmd(getClient func() Client) *cobra.Command {
 				return output.EmitSuccess(data, format)
 			}
 
-			d := getMap(data, "data")
-			list := getSlice(d, "tags")
+			d := helper.GetMap(data, "data")
+			list := helper.GetSlice(d, "tags")
 
 			fmt.Printf("🏷️  Tags:\n\n")
 			if len(list) == 0 {
@@ -44,8 +46,8 @@ func NewTagsCmd(getClient func() Client) *cobra.Command {
 			}
 			for _, t := range list {
 				m := t.(map[string]interface{})
-				name := getString(m, "tag_name")
-				likes := getInt(m, "likes")
+				name := helper.GetString(m, "tag_name")
+				likes := helper.GetInt(m, "likes")
 				fmt.Printf("  #%s (👍 %d)\n", name, likes)
 			}
 			return nil

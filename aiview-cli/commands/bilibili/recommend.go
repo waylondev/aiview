@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -33,8 +35,8 @@ func NewRecommendCmd(getClient func() Client) *cobra.Command {
 				return output.EmitSuccess(data, format)
 			}
 
-			d := getMap(data, "data")
-			list := getSlice(d, "item")
+			d := helper.GetMap(data, "data")
+			list := helper.GetSlice(d, "item")
 
 			if max > 0 && max < len(list) {
 				list = list[:max]
@@ -43,12 +45,12 @@ func NewRecommendCmd(getClient func() Client) *cobra.Command {
 			fmt.Println("🎯 Recommended Videos:")
 			for i, item := range list {
 				m := item.(map[string]interface{})
-				owner := getMap(m, "owner")
-				stat := getMap(m, "stat")
-				title := getString(m, "title")
-				bvid := getString(m, "bvid")
-				name := getString(owner, "name")
-				view := getInt(stat, "view")
+				owner := helper.GetMap(m, "owner")
+				stat := helper.GetMap(m, "stat")
+				title := helper.GetString(m, "title")
+				bvid := helper.GetString(m, "bvid")
+				name := helper.GetString(owner, "name")
+				view := helper.GetInt(stat, "view")
 
 				fmt.Printf("  %d. [%s] %s\n", i+1, bvid, title)
 				fmt.Printf("     Uploader: %s  Views: %s\n\n", name, output.FormatCount(view))

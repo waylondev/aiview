@@ -8,7 +8,7 @@ import (
 )
 
 // NewStatusCmd creates the status command.
-func NewStatusCmd(getClient func() Client) *cobra.Command {
+func NewStatusCmd(statusFn func() (map[string]interface{}, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Check Douyin login status",
@@ -19,10 +19,9 @@ Examples:
   aiview douyin status --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
-			result, err := client.Status()
+			result, err := statusFn()
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get status: %v", err), format)
 				return err

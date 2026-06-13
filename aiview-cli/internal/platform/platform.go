@@ -1,3 +1,4 @@
+// Package platform defines the core Platform interface and registry for multi-platform CLI applications.
 package platform
 
 import (

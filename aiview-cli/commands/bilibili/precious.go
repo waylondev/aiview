@@ -3,6 +3,7 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -33,15 +34,15 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No data returned")
 				return nil
 			}
 
-			title := getString(data, "title")
-			explain := getString(data, "explain")
-			list := getSlice(data, "list")
+			title := helper.GetString(data, "title")
+			explain := helper.GetString(data, "explain")
+			list := helper.GetSlice(data, "list")
 
 			fmt.Printf("🏆 %s\n", title)
 			if explain != "" {
@@ -54,13 +55,13 @@ Examples:
 
 			for i, item := range list {
 				m := item.(map[string]interface{})
-				owner := getMap(m, "owner")
-				stat := getMap(m, "stat")
-				bvid := getString(m, "bvid")
-				vtitle := getString(m, "title")
-				author := getString(owner, "name")
-				views := getInt(stat, "view")
-				achievement := getString(m, "achievement")
+				owner := helper.GetMap(m, "owner")
+				stat := helper.GetMap(m, "stat")
+				bvid := helper.GetString(m, "bvid")
+				vtitle := helper.GetString(m, "title")
+				author := helper.GetString(owner, "name")
+				views := helper.GetInt(stat, "view")
+				achievement := helper.GetString(m, "achievement")
 
 				fmt.Printf("  %d. [%s] %s\n", i+1, bvid, vtitle)
 				fmt.Printf("     UP主: %s  Views: %d\n", author, views)

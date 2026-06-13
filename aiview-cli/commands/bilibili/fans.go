@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -37,8 +39,8 @@ func NewFansCmd(getClient func() Client) *cobra.Command {
 				return output.EmitSuccess(data, format)
 			}
 
-			d := getMap(data, "data")
-			list := getSlice(d, "list")
+			d := helper.GetMap(data, "data")
+			list := helper.GetSlice(d, "list")
 
 			fmt.Printf("👥 Fans (UID: %d):\n\n", uid)
 			if len(list) == 0 {
@@ -47,9 +49,9 @@ func NewFansCmd(getClient func() Client) *cobra.Command {
 			}
 			for i, u := range list {
 				m := u.(map[string]interface{})
-				name := getString(m, "uname")
-				mid := getInt(m, "mid")
-				sign := getString(m, "sign")
+				name := helper.GetString(m, "uname")
+				mid := helper.GetInt(m, "mid")
+				sign := helper.GetString(m, "sign")
 				fmt.Printf("  %d. %s (UID: %d)\n", i+1, name, mid)
 				if sign != "" {
 					fmt.Printf("     %s\n", sign)

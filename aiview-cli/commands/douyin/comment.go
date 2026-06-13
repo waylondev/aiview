@@ -3,12 +3,14 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewCommentCmd creates the comment command.
-func NewCommentCmd(getClient func() Client) *cobra.Command {
+func NewCommentCmd(client Client) *cobra.Command {
 	var cursor int
 
 	cmd := &cobra.Command{
@@ -23,7 +25,6 @@ Examples:
   aiview douyin comment 123456789 --cursor 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			result, err := client.GetVideoComments(args[0], cursor)
@@ -36,13 +37,13 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No comments data returned")
 				return nil
 			}
 
-			comments := getSlice(data, "comments")
+			comments := helper.GetSlice(data, "comments")
 			if len(comments) == 0 {
 				fmt.Println("No comments found")
 				return nil
@@ -51,9 +52,9 @@ Examples:
 			fmt.Printf("💬 Douyin Comments (video: %s):\n\n", args[0])
 			for i, item := range comments {
 				m := item.(map[string]interface{})
-				user := getMap(m, "user")
-				username := getString(user, "nickname")
-				text := getString(m, "text")
+				user := helper.GetMap(m, "user")
+				username := helper.GetString(user, "nickname")
+				text := helper.GetString(m, "text")
 
 				fmt.Printf("  %2d. ", i+1)
 				if username != "" {

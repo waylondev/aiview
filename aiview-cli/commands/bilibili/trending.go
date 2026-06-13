@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -36,19 +38,19 @@ Examples:
 				return output.EmitSuccess(result, format)
 			}
 
-			data := getMap(result, "data")
+			data := helper.GetMap(result, "data")
 			if data == nil {
 				fmt.Println("No data returned")
 				return nil
 			}
 
-			trending := getMap(data, "trending")
+			trending := helper.GetMap(data, "trending")
 			if trending == nil {
 				fmt.Println("No trending data returned")
 				return nil
 			}
 
-			list := getSlice(trending, "list")
+			list := helper.GetSlice(trending, "list")
 			if len(list) == 0 {
 				fmt.Println("No trending keywords found")
 				return nil
@@ -57,9 +59,9 @@ Examples:
 			fmt.Printf("🔥 Bilibili Trending:\n\n")
 			for i, item := range list {
 				m := item.(map[string]interface{})
-				keyword := getString(m, "keyword")
-				showName := getString(m, "show_name")
-				icon := getString(m, "icon")
+				keyword := helper.GetString(m, "keyword")
+				showName := helper.GetString(m, "show_name")
+				icon := helper.GetString(m, "icon")
 
 				display := keyword
 				if showName != "" && showName != keyword {

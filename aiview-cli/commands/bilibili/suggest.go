@@ -3,6 +3,8 @@ package bilibili
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/helper"
+
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +30,8 @@ func NewSuggestCmd(getClient func() Client) *cobra.Command {
 				return output.EmitSuccess(data, format)
 			}
 
-			d := getMap(data, "data")
-			showName := getString(d, "show_name")
+			d := helper.GetMap(data, "data")
+			showName := helper.GetString(d, "show_name")
 
 			fmt.Printf("🔍 Suggestions for \"%s\":\n\n", args[0])
 			if showName == "" {

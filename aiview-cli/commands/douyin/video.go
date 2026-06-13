@@ -26,7 +26,7 @@ func extractVideoID(input string) (string, error) {
 }
 
 // NewVideoCmd creates the video command.
-func NewVideoCmd(getClient func() Client) *cobra.Command {
+func NewVideoCmd(client Client) *cobra.Command {
 	return &cobra.Command{
 		Use:   "video <share_url_or_id>",
 		Short: "View Douyin video details",
@@ -39,7 +39,6 @@ Examples:
   aiview douyin video 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := getClient()
 			format := GetOutputFormat(cmd)
 
 			videoID, err := extractVideoID(args[0])
