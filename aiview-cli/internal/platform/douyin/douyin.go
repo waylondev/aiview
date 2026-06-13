@@ -46,7 +46,9 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 	}
 
 	c := p.getClient()
-	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie))
+	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie, func() douyinCommands.Client {
+		return NewClient(30, p.authStore.GetCookie())
+	}))
 	douyinCmd.AddCommand(douyinCommands.NewHotCmd(c))
 	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(c))
 	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(c))

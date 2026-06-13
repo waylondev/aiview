@@ -101,9 +101,20 @@ func (c *Client) GetTrending() (map[string]interface{}, error) {
 	})
 }
 
+// checkAuth verifies that the client has authentication credentials.
+func (c *Client) checkAuth() error {
+	if c.cookies == "" {
+		return fmt.Errorf("请先执行 'aiview douyin login --cookie <cookie>' 登录")
+	}
+	return nil
+}
+
 // GetVideoDetail fetches video details by video ID.
 // API: /aweme/v1/web/aweme/detail/?aweme_id={videoID}
 func (c *Client) GetVideoDetail(videoID string) (map[string]interface{}, error) {
+	if err := c.checkAuth(); err != nil {
+		return nil, err
+	}
 	return c.get("/aweme/v1/web/aweme/detail/", url.Values{
 		"aweme_id": {videoID},
 	})
@@ -112,6 +123,9 @@ func (c *Client) GetVideoDetail(videoID string) (map[string]interface{}, error) 
 // GetUserInfo fetches user info by uid.
 // API: /aweme/v1/web/user/profile/other/?sec_user_id={uid}
 func (c *Client) GetUserInfo(uid string) (map[string]interface{}, error) {
+	if err := c.checkAuth(); err != nil {
+		return nil, err
+	}
 	return c.get("/aweme/v1/web/user/profile/other/", url.Values{
 		"sec_user_id": {uid},
 	})
@@ -130,6 +144,9 @@ func (c *Client) GetVideoComments(videoID string, cursor int) (map[string]interf
 // GetUserPosts fetches posts by a user.
 // API: /aweme/v1/web/aweme/post/?sec_user_id={uid}&cursor={cursor}&count=20
 func (c *Client) GetUserPosts(uid string, cursor int) (map[string]interface{}, error) {
+	if err := c.checkAuth(); err != nil {
+		return nil, err
+	}
 	return c.get("/aweme/v1/web/aweme/post/", url.Values{
 		"sec_user_id": {uid},
 		"cursor":      {fmt.Sprintf("%d", cursor)},

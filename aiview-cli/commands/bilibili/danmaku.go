@@ -1,6 +1,7 @@
 package bilibili
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -70,24 +71,25 @@ func NewDanmakuCmd(getClient func() Client) *cobra.Command {
 			}
 
 			if format == output.FormatJSON || format == output.FormatYAML {
+				// protobuf 格式需要专门的解码器，当前以 hex dump 形式展示
+				hexDump := hex.Dump(xmlData)
 				return output.EmitSuccess(map[string]interface{}{
 					"bvid":      bvid,
-					"danmaku":   string(xmlData),
+					"danmaku":   hexDump,
 					"byte_size": len(xmlData),
 				}, format)
 			}
 
 			fmt.Printf("💬 Danmaku for %s\n", bvid)
-			fmt.Printf("   Raw XML data: %d bytes\n", len(xmlData))
+			fmt.Printf("   Raw protobuf data: %d bytes\n", len(xmlData))
 			fmt.Println()
-			// Print first few lines if it's text
-			content := string(xmlData)
-			if len(content) > 500 {
-				content = content[:500]
-			}
-			fmt.Println(content)
-			if len(xmlData) > 500 {
+			// protobuf 格式需要专门的解码器，当前以 hex dump 形式展示
+			hexDump := hex.Dump(xmlData)
+			if len(hexDump) > 1000 {
+				fmt.Println(hexDump[:1000])
 				fmt.Println("... (truncated)")
+			} else {
+				fmt.Println(hexDump)
 			}
 			return nil
 		},

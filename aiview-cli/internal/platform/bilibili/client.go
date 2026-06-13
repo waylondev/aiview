@@ -85,7 +85,25 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	}
 	defer resp.Body.Close()
 
-	return c.parseResponse(resp)
+	result, err := c.parseResponse(resp)
+	if err != nil && isRiskControlError(err) {
+		// -352 风控绕过：添加 buvid3 cookie 重试一次
+		retryReq, _ := http.NewRequest("GET", reqURL, nil)
+		retryReq.Header = c.buildHeaders()
+		existingCookie := retryReq.Header.Get("Cookie")
+		if existingCookie != "" {
+			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
+		} else {
+			retryReq.Header.Set("Cookie", "buvid3=placeholder")
+		}
+		retryResp, err := c.httpClient.Do(retryReq)
+		if err != nil {
+			return nil, fmt.Errorf("network request failed on retry: %w", err)
+		}
+		defer retryResp.Body.Close()
+		return c.parseResponse(retryResp)
+	}
+	return result, err
 }
 
 func (c *Client) getWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
@@ -106,13 +124,40 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 	}
 	defer resp.Body.Close()
 
-	return c.parseResponse(resp)
+	result, err := c.parseResponse(resp)
+	if err != nil && isRiskControlError(err) {
+		// -352 风控绕过：添加 buvid3 cookie 重试一次
+		retryReq, _ := http.NewRequest("GET", reqURL, nil)
+		retryReq.Header = c.buildRefererHeaders(referer)
+		existingCookie := retryReq.Header.Get("Cookie")
+		if existingCookie != "" {
+			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
+		} else {
+			retryReq.Header.Set("Cookie", "buvid3=placeholder")
+		}
+		retryResp, err := c.httpClient.Do(retryReq)
+		if err != nil {
+			return nil, fmt.Errorf("network request failed on retry: %w", err)
+		}
+		defer retryResp.Body.Close()
+		return c.parseResponse(retryResp)
+	}
+	return result, err
 }
 
 func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response: %w", err)
+	}
+
+	// 检测 HTML 响应（直播间不存在或已关闭等情况）
+	contentType := resp.Header.Get("Content-Type")
+	bodyStr := string(body)
+	if strings.Contains(contentType, "text/html") ||
+		strings.HasPrefix(strings.TrimSpace(bodyStr), "<!DOCTYPE") ||
+		strings.HasPrefix(strings.TrimSpace(bodyStr), "<html") {
+		return nil, fmt.Errorf("直播间不存在或已关闭")
 	}
 
 	var result map[string]interface{}
@@ -1123,6 +1168,14 @@ func (c *Client) GetWeeklyHotVideos(number int) (map[string]interface{}, error) 
 	params := url.Values{}
 	params.Set("number", strconv.Itoa(number))
 	return c.wbiGet("/x/web-interface/popular/series/one", params)
+}
+
+// isRiskControlError checks if the error is a -352 risk control error.
+func isRiskControlError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "API error [-352]")
 }
 
 func getFloat(m map[string]interface{}, key string) float64 {

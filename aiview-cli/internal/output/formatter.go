@@ -2,9 +2,11 @@
 package output
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"text/tabwriter"
 
@@ -37,12 +39,19 @@ const (
 	FormatJSON
 	FormatYAML
 	FormatTable
+	FormatCSV
 )
 
 // ResolveFormat determines the output format based on flags and TTY status.
-func ResolveFormat(asJSON, asYAML bool) Format {
-	if asJSON && asYAML {
-		fmt.Fprintln(os.Stderr, "Cannot use both --json and --yaml")
+func ResolveFormat(asJSON, asYAML, asTable, asCSV bool) Format {
+	count := 0
+	for _, v := range []bool{asJSON, asYAML, asTable, asCSV} {
+		if v {
+			count++
+		}
+	}
+	if count > 1 {
+		fmt.Fprintln(os.Stderr, "Cannot use multiple output format flags simultaneously")
 		os.Exit(1)
 	}
 	if asJSON {
@@ -51,12 +60,20 @@ func ResolveFormat(asJSON, asYAML bool) Format {
 	if asYAML {
 		return FormatYAML
 	}
+	if asTable {
+		return FormatTable
+	}
+	if asCSV {
+		return FormatCSV
+	}
 	outputMode := strings.ToLower(os.Getenv("OUTPUT"))
 	switch outputMode {
 	case "json":
 		return FormatJSON
 	case "yaml":
 		return FormatYAML
+	case "csv":
+		return FormatCSV
 	case "rich", "table":
 		return FormatTable
 	}
@@ -117,6 +134,9 @@ func emitEnvelope(env Envelope, format Format) error {
 		// For table format, we just print the data directly
 		// Commands should handle their own table rendering
 		return nil
+	case FormatCSV:
+		// For CSV format, commands should handle their own CSV rendering
+		return nil
 	}
 	return nil
 }
@@ -124,6 +144,152 @@ func emitEnvelope(env Envelope, format Format) error {
 // NewTableWriter creates a new tabwriter for aligned table output.
 func NewTableWriter() *tabwriter.Writer {
 	return tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
+}
+
+// RenderTable renders data as a table using tabwriter.
+// data should be a slice of structs or a slice of slices.
+func RenderTable(data interface{}) error {
+	v := reflect.ValueOf(data)
+	if v.Kind() != reflect.Slice {
+		return fmt.Errorf("RenderTable: expected slice, got %T", data)
+	}
+	if v.Len() == 0 {
+		return nil
+	}
+
+	w := NewTableWriter()
+	defer w.Flush()
+
+	// Check if it's a slice of slices
+	if v.Index(0).Kind() == reflect.Slice {
+		for i := 0; i < v.Len(); i++ {
+			row := v.Index(i)
+			for j := 0; j < row.Len(); j++ {
+				fmt.Fprintf(w, "%v", row.Index(j).Interface())
+				if j < row.Len()-1 {
+					fmt.Fprint(w, "\t")
+				}
+			}
+			fmt.Fprintln(w)
+		}
+		return nil
+	}
+
+	// It's a slice of structs - extract headers from first element
+	firstElem := v.Index(0)
+	if firstElem.Kind() == reflect.Ptr {
+		firstElem = firstElem.Elem()
+	}
+	if firstElem.Kind() != reflect.Struct {
+		return fmt.Errorf("RenderTable: expected slice of structs or slices, got %T", data)
+	}
+
+	t := firstElem.Type()
+	var headers []string
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.IsExported() {
+			headers = append(headers, field.Name)
+		}
+	}
+
+	// Print headers
+	for i, h := range headers {
+		fmt.Fprint(w, h)
+		if i < len(headers)-1 {
+			fmt.Fprint(w, "\t")
+		}
+	}
+	fmt.Fprintln(w)
+
+	// Print rows
+	for i := 0; i < v.Len(); i++ {
+		elem := v.Index(i)
+		if elem.Kind() == reflect.Ptr {
+			elem = elem.Elem()
+		}
+		for j, h := range headers {
+			field := elem.FieldByName(h)
+			fmt.Fprintf(w, "%v", field.Interface())
+			if j < len(headers)-1 {
+				fmt.Fprint(w, "\t")
+			}
+		}
+		fmt.Fprintln(w)
+	}
+
+	return nil
+}
+
+// RenderCSV renders data as CSV using encoding/csv.
+// data should be a slice of structs or a slice of slices.
+func RenderCSV(data interface{}) error {
+	v := reflect.ValueOf(data)
+	if v.Kind() != reflect.Slice {
+		return fmt.Errorf("RenderCSV: expected slice, got %T", data)
+	}
+	if v.Len() == 0 {
+		return nil
+	}
+
+	w := csv.NewWriter(os.Stdout)
+	defer w.Flush()
+
+	// Check if it's a slice of slices
+	if v.Index(0).Kind() == reflect.Slice {
+		for i := 0; i < v.Len(); i++ {
+			row := v.Index(i)
+			var record []string
+			for j := 0; j < row.Len(); j++ {
+				record = append(record, fmt.Sprintf("%v", row.Index(j).Interface()))
+			}
+			if err := w.Write(record); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// It's a slice of structs - extract headers from first element
+	firstElem := v.Index(0)
+	if firstElem.Kind() == reflect.Ptr {
+		firstElem = firstElem.Elem()
+	}
+	if firstElem.Kind() != reflect.Struct {
+		return fmt.Errorf("RenderCSV: expected slice of structs or slices, got %T", data)
+	}
+
+	t := firstElem.Type()
+	var headers []string
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.IsExported() {
+			headers = append(headers, field.Name)
+		}
+	}
+
+	// Write headers
+	if err := w.Write(headers); err != nil {
+		return err
+	}
+
+	// Write rows
+	for i := 0; i < v.Len(); i++ {
+		elem := v.Index(i)
+		if elem.Kind() == reflect.Ptr {
+			elem = elem.Elem()
+		}
+		var record []string
+		for _, h := range headers {
+			field := elem.FieldByName(h)
+			record = append(record, fmt.Sprintf("%v", field.Interface()))
+		}
+		if err := w.Write(record); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // FormatCount formats a large number with a "w" (万) suffix.
@@ -158,5 +324,7 @@ func GetFormat(cmd *cobra.Command) Format {
 	}
 	asJSON, _ := parent.Flags().GetBool("json")
 	asYAML, _ := parent.Flags().GetBool("yaml")
-	return ResolveFormat(asJSON, asYAML)
+	asTable, _ := parent.Flags().GetBool("table")
+	asCSV, _ := parent.Flags().GetBool("csv")
+	return ResolveFormat(asJSON, asYAML, asTable, asCSV)
 }

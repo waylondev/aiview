@@ -8,7 +8,7 @@ import (
 )
 
 // NewLoginCmd creates the login command for Douyin.
-func NewLoginCmd(saveCookie func(cookie string) error) *cobra.Command {
+func NewLoginCmd(saveCookie func(cookie string) error, getClient func() Client) *cobra.Command {
 	var cookie string
 
 	cmd := &cobra.Command{
@@ -28,7 +28,15 @@ Examples:
 				output.EmitError("internal_error", fmt.Sprintf("failed to save credential: %v", err), format)
 				return err
 			}
-			fmt.Println("Login credential saved")
+
+			// Verify cookie by calling GetHotSearch
+			client := getClient()
+			_, err := client.GetHotSearch()
+			if err != nil {
+				fmt.Printf("Cookie 已保存，但验证失败: %v\n", err)
+				return nil
+			}
+			fmt.Println("登录成功")
 			return nil
 		},
 	}

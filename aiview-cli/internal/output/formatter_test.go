@@ -5,24 +5,38 @@ import (
 )
 
 func TestResolveFormat_JSON(t *testing.T) {
-	f := ResolveFormat(true, false)
+	f := ResolveFormat(true, false, false, false)
 	if f != FormatJSON {
 		t.Errorf("expected FormatJSON, got %d", f)
 	}
 }
 
 func TestResolveFormat_YAML(t *testing.T) {
-	f := ResolveFormat(false, true)
+	f := ResolveFormat(false, true, false, false)
 	if f != FormatYAML {
 		t.Errorf("expected FormatYAML, got %d", f)
 	}
 }
 
 func TestResolveFormat_Default(t *testing.T) {
-	// When neither JSON nor YAML is specified, and not a TTY, defaults to YAML
-	f := ResolveFormat(false, false)
+	// When no format is specified and not a TTY, defaults to YAML
+	f := ResolveFormat(false, false, false, false)
 	if f != FormatYAML && f != FormatTable {
 		t.Errorf("expected FormatYAML or FormatTable, got %d", f)
+	}
+}
+
+func TestResolveFormat_Table(t *testing.T) {
+	f := ResolveFormat(false, false, true, false)
+	if f != FormatTable {
+		t.Errorf("expected FormatTable, got %d", f)
+	}
+}
+
+func TestResolveFormat_CSV(t *testing.T) {
+	f := ResolveFormat(false, false, false, true)
+	if f != FormatCSV {
+		t.Errorf("expected FormatCSV, got %d", f)
 	}
 }
 

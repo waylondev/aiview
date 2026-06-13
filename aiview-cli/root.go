@@ -9,6 +9,7 @@ import (
 	"github.com/jackwener/aiview/internal/platform"
 	_ "github.com/jackwener/aiview/internal/platform/bilibili"
 	_ "github.com/jackwener/aiview/internal/platform/douyin"
+	_ "github.com/jackwener/aiview/internal/platform/xiaohongshu"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,8 @@ var (
 	cfg     *config.Config
 	asJSON  bool
 	asYAML  bool
+	asTable bool
+	asCSV   bool
 	verbose bool
 )
 
@@ -52,7 +55,7 @@ func getConfig() *config.Config {
 
 // getOutputFormat resolves the current output format.
 func getOutputFormat() output.Format {
-	return output.ResolveFormat(asJSON, asYAML)
+	return output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
 }
 
 // isVerbose returns whether verbose logging is enabled.
@@ -62,7 +65,7 @@ func isVerbose() bool {
 
 // exitError prints an error message and exits with code 1.
 func exitError(code, message string) {
-	format := output.ResolveFormat(asJSON, asYAML)
+	format := output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
 	output.EmitError(code, message, format)
 	os.Exit(1)
 }
@@ -70,5 +73,7 @@ func exitError(code, message string) {
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&asJSON, "json", false, "Output in JSON format")
 	rootCmd.PersistentFlags().BoolVar(&asYAML, "yaml", false, "Output in YAML format")
+	rootCmd.PersistentFlags().BoolVar(&asTable, "table", false, "Output in table format")
+	rootCmd.PersistentFlags().BoolVar(&asCSV, "csv", false, "Output in CSV format")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 }
