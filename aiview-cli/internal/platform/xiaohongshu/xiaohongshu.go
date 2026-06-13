@@ -66,9 +66,8 @@ func (p *XiaohongshuPlatform) getClient() *Client {
 		return p.cachedClient
 	}
 	timeout := 30
-	if p.config != nil && p.config.Platforms.Douyin.Timeout > 0 {
-		// Xiaohongshu doesn't have its own config yet, use default
-		timeout = 30
+	if p.config != nil && p.config.Platforms.Xiaohongshu.Timeout > 0 {
+		timeout = p.config.Platforms.Xiaohongshu.Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
 	return p.cachedClient
