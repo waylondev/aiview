@@ -30,6 +30,17 @@ func (m *mockStorage) Query(platform, recordType string, limit int) ([]storage.R
 	return result, nil
 }
 
+func (m *mockStorage) QueryAll(limit int) ([]storage.Record, error) {
+	var result []storage.Record
+	for _, r := range m.records {
+		result = append(result, r)
+	}
+	if limit > 0 && len(result) > limit {
+		result = result[:limit]
+	}
+	return result, nil
+}
+
 func (m *mockStorage) Close() error { return nil }
 
 func TestAnalyzeTrend_Empty(t *testing.T) {

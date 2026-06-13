@@ -15,5 +15,6 @@ type Record struct {
 type Storage interface {
 	Save(record Record) error
 	Query(platform, recordType string, limit int) ([]Record, error)
+	QueryAll(limit int) ([]Record, error)
 	Close() error
 }

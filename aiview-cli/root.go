@@ -5,12 +5,15 @@ import (
 	"os"
 
 	"github.com/jackwener/aiview/commands"
+	"github.com/jackwener/aiview/dashboard"
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/platform"
 	_ "github.com/jackwener/aiview/internal/platform/bilibili"
 	_ "github.com/jackwener/aiview/internal/platform/douyin"
 	_ "github.com/jackwener/aiview/internal/platform/xiaohongshu"
+	"github.com/jackwener/aiview/internal/scheduler"
+	"github.com/jackwener/aiview/internal/storage"
 	"github.com/spf13/cobra"
 )
 
@@ -45,6 +48,35 @@ func Execute() error {
 	rootCmd.AddCommand(commands.NewAnalyzeCmd())
 	rootCmd.AddCommand(commands.NewCompareCmd())
 	rootCmd.AddCommand(commands.NewScheduleCmd())
+
+	// Register TUI command
+	rootCmd.AddCommand(NewTUICmd())
+
+	// Register dashboard command
+	dashboardCmd := &cobra.Command{
+		Use:   "dashboard",
+		Short: "Launch web dashboard",
+		Long:  "Launch a web-based dashboard for monitoring and visualization.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			port, _ := cmd.Flags().GetInt("port")
+			dbPath, _ := cmd.Flags().GetString("db")
+
+			store, err := storage.NewSQLiteStorage(dbPath)
+			if err != nil {
+				return fmt.Errorf("failed to open storage: %w", err)
+			}
+			defer store.Close()
+
+			sched := scheduler.New()
+			server := dashboard.NewServer(port, store, sched)
+
+			fmt.Printf("Dashboard starting at http://localhost:%d\n", port)
+			return server.Start()
+		},
+	}
+	dashboardCmd.Flags().Int("port", 8080, "Dashboard port")
+	dashboardCmd.Flags().String("db", "data.db", "Database path")
+	rootCmd.AddCommand(dashboardCmd)
 
 	// Register all platform commands (must happen after all init() have run)
 	for _, p := range platform.All() {

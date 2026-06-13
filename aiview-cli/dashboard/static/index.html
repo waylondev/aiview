@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIView Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 AIView Dashboard</h1>
+            <p class="subtitle">多平台数据监控面板</p>
+        </header>
+
+        <main>
+            <!-- 平台状态卡片 -->
+            <section class="section">
+                <h2>平台状态</h2>
+                <div id="platforms-container" class="cards-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- 趋势图表 -->
+            <section class="section">
+                <h2>数据趋势</h2>
+                <div class="chart-controls">
+                    <select id="platform-select">
+                        <option value="bilibili">Bilibili</option>
+                        <option value="douyin">抖音</option>
+                        <option value="xiaohongshu">小红书</option>
+                    </select>
+                    <select id="type-select">
+                        <option value="hot">热门</option>
+                        <option value="search">搜索</option>
+                        <option value="video">视频</option>
+                    </select>
+                    <select id="days-select">
+                        <option value="7">7天</option>
+                        <option value="14">14天</option>
+                        <option value="30">30天</option>
+                    </select>
+                    <button id="refresh-trend">刷新</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="trend-chart"></canvas>
+                </div>
+                <div id="trend-stats" class="stats-grid"></div>
+            </section>
+
+            <!-- 任务调度 -->
+            <section class="section">
+                <h2>任务调度</h2>
+                <div id="schedule-container">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- 历史记录 -->
+            <section class="section">
+                <h2>历史记录</h2>
+                <div class="history-controls">
+                    <select id="history-limit">
+                        <option value="20">20条</option>
+                        <option value="50" selected>50条</option>
+                        <option value="100">100条</option>
+                    </select>
+                    <button id="refresh-history">刷新</button>
+                </div>
+                <div id="history-container">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>AIView Dashboard v1.0 | 数据每30秒自动刷新</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -75,6 +75,34 @@ func (s *SQLiteStorage) Query(platform, recordType string, limit int) ([]Record,
 	return records, nil
 }
 
+func (s *SQLiteStorage) QueryAll(limit int) ([]Record, error) {
+	query := "SELECT platform, type, data, collected_at FROM records ORDER BY collected_at DESC"
+	args := []interface{}{}
+	if limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, limit)
+	}
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query records: %w", err)
+	}
+	defer rows.Close()
+
+	var records []Record
+	for rows.Next() {
+		var r Record
+		var dataStr, timeStr string
+		if err := rows.Scan(&r.Platform, &r.Type, &dataStr, &timeStr); err != nil {
+			continue
+		}
+		json.Unmarshal([]byte(dataStr), &r.Data)
+		r.CollectedAt, _ = time.Parse(time.RFC3339, timeStr)
+		records = append(records, r)
+	}
+	return records, nil
+}
+
 func (s *SQLiteStorage) Close() error {
 	return s.db.Close()
 }

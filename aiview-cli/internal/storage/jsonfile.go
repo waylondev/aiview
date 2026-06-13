@@ -76,6 +76,36 @@ func (s *JSONFileStorage) Query(platform, recordType string, limit int) ([]Recor
 	return records, nil
 }
 
+func (s *JSONFileStorage) QueryAll(limit int) ([]Record, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return nil, fmt.Errorf("read dir: %w", err)
+	}
+
+	var records []Record
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(s.dir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		var record Record
+		if err := json.Unmarshal(data, &record); err != nil {
+			continue
+		}
+		records = append(records, record)
+		if limit > 0 && len(records) >= limit {
+			break
+		}
+	}
+	return records, nil
+}
+
 func (s *JSONFileStorage) Close() error {
 	return nil
 }
