@@ -131,6 +131,9 @@ func (p *BilibiliPlatform) Commands() []*cobra.Command {
 	// Weekly
 	biliCmd.AddCommand(biliCommands.NewWeeklyCmd(func() biliCommands.Client { return p.BuildClient() }))
 
+	// Collect
+	biliCmd.AddCommand(biliCommands.NewCollectCmd(func() biliCommands.Client { return p.BuildClient() }))
+
 	return []*cobra.Command{biliCmd}
 }
 

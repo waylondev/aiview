@@ -58,6 +58,9 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 	douyinCmd.AddCommand(douyinCommands.NewUserPostsCmd(c))
 	douyinCmd.AddCommand(douyinCommands.NewStatusCmd(func() (map[string]interface{}, error) { return p.Status() }))
 	douyinCmd.AddCommand(douyinCommands.NewLogoutCmd(func() error { return p.Logout() }))
+	douyinCmd.AddCommand(douyinCommands.NewCollectCmd(func() douyinCommands.Client {
+		return NewClient(30, p.authStore.GetCookie())
+	}))
 
 	return []*cobra.Command{douyinCmd}
 }

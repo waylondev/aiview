@@ -3,8 +3,10 @@ package bilibili
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/jackwener/aiview/internal/browser"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -33,6 +35,7 @@ func NewLoginCmd(authStore AuthProvider, getClient func() Client) *cobra.Command
 	var (
 		sessdata string
 		biliJct  string
+		auto     bool
 	)
 
 	cmd := &cobra.Command{
@@ -44,6 +47,7 @@ Three methods supported:
   1. No arguments: QR code scan login
   2. --sessdata: Pass SESSDATA Cookie directly
   3. --sessdata + --bili-jct: Pass full credential (supports write operations)
+  4. --auto: Automatically open browser to get cookie
 
 How to get bili_jct:
   1. Open browser, login to bilibili.com
@@ -51,6 +55,28 @@ How to get bili_jct:
   3. Copy the value of bili_jct`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := output.GetFormat(cmd)
+
+			// Auto browser login
+			if auto {
+				fmt.Println("🌐 Opening browser for login...")
+				cookies, err := browser.GetCookies("https://www.bilibili.com", 2*time.Minute)
+				if err != nil {
+					output.EmitError("internal_error", fmt.Sprintf("Failed to get cookies from browser: %v", err), format)
+					return err
+				}
+				fmt.Printf("🍪 Got cookies from browser (%d bytes)\n", len(cookies))
+				cred := &Credential{
+					Sessdata: extractCookieValue(cookies, "SESSDATA"),
+					BiliJct:  extractCookieValue(cookies, "bili_jct"),
+					SavedAt:  time.Now().Unix(),
+				}
+				if err := authStore.Save(cred); err != nil {
+					output.EmitError("internal_error", fmt.Sprintf("Failed to save credential: %v", err), format)
+					return err
+				}
+				fmt.Println("✅ Logged in via browser")
+				return nil
+			}
 
 			// Cookie-based login
 			if sessdata != "" {
@@ -113,8 +139,21 @@ How to get bili_jct:
 
 	cmd.Flags().StringVar(&sessdata, "sessdata", "", "Set SESSDATA Cookie directly")
 	cmd.Flags().StringVar(&biliJct, "bili-jct", "", "Set bili_jct Cookie directly")
+	cmd.Flags().BoolVar(&auto, "auto", false, "Automatically open browser to get cookie")
 
 	return cmd
+}
+
+// extractCookieValue extracts a cookie value from a cookie string.
+func extractCookieValue(cookies, name string) string {
+	for _, part := range strings.Split(cookies, ";") {
+		part = strings.TrimSpace(part)
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 && kv[0] == name {
+			return kv[1]
+		}
+	}
+	return ""
 }
 
 // NewLogoutCmd creates the logout command.

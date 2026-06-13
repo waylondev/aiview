@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jackwener/aiview/commands"
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/platform"
@@ -39,6 +40,9 @@ var rootCmd = &cobra.Command{
 
 // Execute runs the root command.
 func Execute() error {
+	// Register global commands
+	rootCmd.AddCommand(commands.NewExportCmd())
+
 	// Register all platform commands (must happen after all init() have run)
 	for _, p := range platform.All() {
 		for _, cmd := range p.Commands() {

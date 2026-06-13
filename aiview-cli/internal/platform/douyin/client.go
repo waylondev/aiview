@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/jackwener/aiview/internal/cache"
+	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
 const (
@@ -18,6 +21,8 @@ const (
 type Client struct {
 	httpClient *http.Client
 	cookies    string
+	limiter    *ratelimit.Limiter
+	cache      *cache.Cache
 }
 
 // NewClient creates a new Douyin API client.
@@ -27,6 +32,8 @@ func NewClient(timeoutSec int, cookies string) *Client {
 			Timeout: time.Duration(timeoutSec) * time.Second,
 		},
 		cookies: cookies,
+		limiter: ratelimit.New(2, 5),
+		cache:   cache.New(5 * time.Minute),
 	}
 }
 
@@ -48,6 +55,14 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	if params != nil {
 		u += "?" + params.Encode()
 	}
+
+	// Check cache first
+	if cached, ok := c.cache.Get(u); ok {
+		return cached.(map[string]interface{}), nil
+	}
+
+	// Rate limit
+	c.limiter.Wait()
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
@@ -78,8 +93,11 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		// Try parsing as raw response
-		return map[string]interface{}{"raw": string(body)}, nil
+		result = map[string]interface{}{"raw": string(body)}
 	}
+
+	// Store in cache
+	c.cache.Set(u, result)
 	return result, nil
 }
 

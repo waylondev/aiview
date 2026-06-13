@@ -11,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackwener/aiview/internal/cache"
 	"github.com/jackwener/aiview/internal/helper"
+	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
 const (
@@ -24,6 +26,8 @@ type Client struct {
 	httpClient  *http.Client
 	credential  *Credential
 	cookies     string
+	limiter     *ratelimit.Limiter
+	cache       *cache.Cache
 }
 
 // NewClient creates a new Bilibili API client.
@@ -34,6 +38,8 @@ func NewClient(timeoutSec int, cookies string, credential *Credential) *Client {
 		},
 		cookies:    cookies,
 		credential: credential,
+		limiter:    ratelimit.New(2, 5),
+		cache:      cache.New(5 * time.Minute),
 	}
 }
 
@@ -73,6 +79,14 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 		reqURL += "?" + params.Encode()
 	}
 
+	// Check cache first
+	if cached, ok := c.cache.Get(reqURL); ok {
+		return cached.(map[string]interface{}), nil
+	}
+
+	// Rate limit
+	c.limiter.Wait()
+
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -101,9 +115,17 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 			return nil, fmt.Errorf("network request failed on retry: %w", err)
 		}
 		defer retryResp.Body.Close()
-		return c.parseResponse(retryResp)
+		result, err = c.parseResponse(retryResp)
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
 	}
-	return result, err
+
+	// Store in cache
+	c.cache.Set(reqURL, result)
+	return result, nil
 }
 
 func (c *Client) getWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
