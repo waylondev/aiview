@@ -42,6 +42,9 @@ var rootCmd = &cobra.Command{
 func Execute() error {
 	// Register global commands
 	rootCmd.AddCommand(commands.NewExportCmd())
+	rootCmd.AddCommand(commands.NewAnalyzeCmd())
+	rootCmd.AddCommand(commands.NewCompareCmd())
+	rootCmd.AddCommand(commands.NewScheduleCmd())
 
 	// Register all platform commands (must happen after all init() have run)
 	for _, p := range platform.All() {
