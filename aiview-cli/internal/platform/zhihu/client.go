@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/cache"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
@@ -59,7 +61,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("zhihu", fmt.Sprintf("failed to create request: %v", err))
 	}
 
 	req.Header.Set("User-Agent", userAgent)
@@ -71,17 +73,29 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, aiverr.NetworkError("zhihu", fmt.Sprintf("request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, aiverr.NetworkError("zhihu", fmt.Sprintf("failed to read response body: %v", err))
+	}
+
+	// Check if response is HTML instead of JSON (indicates authentication issue)
+	if strings.Contains(string(body), "<!DOCTYPE") || strings.Contains(string(body), "<html") {
+		return nil, aiverr.NotAuthenticated("zhihu", "API returned HTML instead of JSON; authentication may be required").WithHTTPStatus(resp.StatusCode)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+		switch resp.StatusCode {
+		case 401, 403:
+			return nil, aiverr.NotAuthenticated("zhihu", "Authentication required").WithHTTPStatus(resp.StatusCode)
+		case 429:
+			return nil, aiverr.RateLimited("zhihu", "Request too frequent").WithHTTPStatus(resp.StatusCode)
+		default:
+			return nil, aiverr.APIError("zhihu", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, truncateBody(string(body), 200))).WithHTTPStatus(resp.StatusCode)
+		}
 	}
 
 	var result map[string]interface{}
@@ -97,9 +111,17 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 // checkAuth verifies that the client has authentication credentials.
 func (c *Client) checkAuth() error {
 	if c.cookies == "" {
-		return fmt.Errorf("请先执行 'aiview zhihu login --cookie <cookie>' 登录")
+		return aiverr.NotAuthenticated("zhihu", "Authentication required").WithSuggestion("Please login with: aiview zhihu login --cookie <cookie>")
 	}
 	return nil
+}
+
+// truncateBody truncates a string to maxLen characters, appending "..." if truncated.
+func truncateBody(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 // GetHotSearch fetches zhihu hot search terms.

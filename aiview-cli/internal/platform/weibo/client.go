@@ -6,9 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jackwener/aiview/internal/cache"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
@@ -59,7 +61,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("weibo", fmt.Sprintf("failed to create request: %v", err))
 	}
 
 	req.Header.Set("User-Agent", userAgent)
@@ -71,17 +73,30 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, aiverr.NetworkError("weibo", fmt.Sprintf("request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, aiverr.NetworkError("weibo", fmt.Sprintf("failed to read response body: %v", err))
+	}
+
+	// 检测 HTML 响应（未登录或被风控）
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<!DOCTYPE") || strings.Contains(bodyStr, "<html") {
+		return nil, aiverr.NotAuthenticated("weibo", "API returned HTML instead of JSON; authentication may be required").WithHTTPStatus(resp.StatusCode)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+		switch resp.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return nil, aiverr.NotAuthenticated("weibo", "Authentication required").WithHTTPStatus(resp.StatusCode)
+		case http.StatusTooManyRequests:
+			return nil, aiverr.RateLimited("weibo", "Request too frequent").WithHTTPStatus(resp.StatusCode)
+		default:
+			return nil, aiverr.APIError("weibo", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, truncateBody(bodyStr, 200))).WithHTTPStatus(resp.StatusCode)
+		}
 	}
 
 	var result map[string]interface{}
@@ -97,7 +112,8 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 // checkAuth verifies that the client has authentication credentials.
 func (c *Client) checkAuth() error {
 	if c.cookies == "" {
-		return fmt.Errorf("请先执行 'aiview weibo login --cookie <cookie>' 登录")
+		return aiverr.NotAuthenticated("weibo", "Authentication required").
+			WithSuggestion("Please login with: aiview weibo login --cookie <cookie>")
 	}
 	return nil
 }
@@ -123,4 +139,12 @@ func (c *Client) GetUserInfo(uid string) (map[string]interface{}, error) {
 	return c.get("/ajax/profile/info", url.Values{
 		"uid": {uid},
 	})
+}
+
+// truncateBody truncates a string to maxLen characters, appending "..." if truncated.
+func truncateBody(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }

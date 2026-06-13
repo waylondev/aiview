@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackwener/aiview/internal/cache"
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
 const (
@@ -20,6 +22,8 @@ const (
 type Client struct {
 	httpClient *http.Client
 	cookies    string
+	limiter    *ratelimit.Limiter
+	cache      *cache.Cache
 }
 
 // NewClient creates a new Xiaohongshu API client.
@@ -29,6 +33,8 @@ func NewClient(timeoutSec int, cookies string) *Client {
 			Timeout: time.Duration(timeoutSec) * time.Second,
 		},
 		cookies: cookies,
+		limiter: ratelimit.New(2, 5),
+		cache:   cache.New(5 * time.Minute),
 	}
 }
 
@@ -39,6 +45,18 @@ func (c *Client) PlatformName() string {
 
 // get sends a GET request to the specified path with query parameters.
 func (c *Client) get(path string, params map[string]string) (map[string]interface{}, error) {
+	// Check cache first
+	cacheKey := path
+	for k, v := range params {
+		cacheKey += "?" + k + "=" + v
+	}
+	if cached, ok := c.cache.Get(cacheKey); ok {
+		return cached.(map[string]interface{}), nil
+	}
+
+	// Rate limit
+	c.limiter.Wait()
+
 	url := baseURL + path
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -91,7 +109,14 @@ func (c *Client) get(path string, params map[string]string) (map[string]interfac
 			WithHTTPStatus(resp.StatusCode)
 	}
 
-	return c.parseResponse(resp.Header.Get("Content-Type"), body)
+	result, err := c.parseResponse(resp.Header.Get("Content-Type"), body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store in cache
+	c.cache.Set(cacheKey, result)
+	return result, nil
 }
 
 // parseResponse detects HTML responses and returns a friendly error, otherwise parses JSON.

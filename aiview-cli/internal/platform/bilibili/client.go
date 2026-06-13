@@ -286,7 +286,7 @@ func (c *Client) GetVideoInfo(bvid string) (*VideoInfo, error) {
 		Title:       helper.GetString(info, "title"),
 		Description: strings.TrimSpace(helper.GetString(info, "desc")),
 		Duration:    helper.GetInt(info, "duration"),
-		DurationStr: formatDuration(helper.GetInt(info, "duration")),
+		DurationStr: helper.FormatDuration(helper.GetInt(info, "duration")),
 		URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", bvid),
 		Owner: OwnerInfo{
 			MID:  helper.GetInt(owner, "mid"),
@@ -381,8 +381,8 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 		content := helper.GetString(m, "content")
 		texts = append(texts, content)
 		items = append(items, SubtitleItem{
-			From:    getFloat(m, "from"),
-			To:      getFloat(m, "to"),
+			From:    helper.GetFloat(m, "from"),
+			To:      helper.GetFloat(m, "to"),
 			Content: content,
 		})
 	}
@@ -476,7 +476,7 @@ func (c *Client) GetRelatedVideos(bvid string) ([]VideoInfo, error) {
 			BVID:        helper.GetString(m, "bvid"),
 			Title:       helper.GetString(m, "title"),
 			Duration:    helper.GetInt(m, "duration"),
-			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			DurationStr: helper.FormatDuration(helper.GetInt(m, "duration")),
 			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
 				MID:  helper.GetInt(owner, "mid"),
@@ -519,7 +519,7 @@ func (c *Client) SearchVideo(keyword string, page int, order string, duration in
 		m := item.(map[string]interface{})
 		results = append(results, SearchVideoResult{
 			BVID:     helper.GetString(m, "bvid"),
-			Title:    stripHTML(helper.GetString(m, "title")),
+			Title:    helper.StripHTML(helper.GetString(m, "title")),
 			Author:   helper.GetString(m, "author"),
 			Play:     helper.GetInt(m, "play"),
 			Duration: helper.GetString(m, "duration"),
@@ -607,7 +607,7 @@ func (c *Client) GetUserVideos(uid int, count int, order string, tid int, keywor
 			BVID:        helper.GetString(m, "bvid"),
 			Title:       helper.GetString(m, "title"),
 			Duration:    helper.GetInt(m, "length"),
-			DurationStr: formatDuration(helper.GetInt(m, "length")),
+			DurationStr: helper.FormatDuration(helper.GetInt(m, "length")),
 			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Stats: VideoStats{
 				View: helper.GetInt(m, "play"),
@@ -643,7 +643,7 @@ func (c *Client) GetHotVideos(page int, count int) ([]VideoInfo, error) {
 			BVID:        helper.GetString(m, "bvid"),
 			Title:       helper.GetString(m, "title"),
 			Duration:    helper.GetInt(m, "duration"),
-			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			DurationStr: helper.FormatDuration(helper.GetInt(m, "duration")),
 			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
 				MID:  helper.GetInt(owner, "mid"),
@@ -680,7 +680,7 @@ func (c *Client) GetRankVideos(rid int, day int, typeStr string) ([]VideoInfo, e
 			BVID:        helper.GetString(m, "bvid"),
 			Title:       helper.GetString(m, "title"),
 			Duration:    helper.GetInt(m, "duration"),
-			DurationStr: formatDuration(helper.GetInt(m, "duration")),
+			DurationStr: helper.FormatDuration(helper.GetInt(m, "duration")),
 			URL:         fmt.Sprintf("https://www.bilibili.com/video/%s", helper.GetString(m, "bvid")),
 			Owner: OwnerInfo{
 				MID:  helper.GetInt(owner, "mid"),
@@ -741,7 +741,7 @@ func (c *Client) GetFavoriteVideos(favID int, page int) ([]FavoriteMedia, error)
 		items = append(items, FavoriteMedia{
 			BVID:     helper.GetString(item, "bvid"),
 			Title:    helper.GetString(item, "title"),
-			Duration: formatDuration(helper.GetInt(item, "duration")),
+			Duration: helper.FormatDuration(helper.GetInt(item, "duration")),
 			Upper:    helper.GetString(upper, "name"),
 		})
 	}
@@ -822,7 +822,7 @@ func (c *Client) GetWatchLater() ([]WatchLaterItem, error) {
 			BVID:     helper.GetString(m, "bvid"),
 			Title:    helper.GetString(m, "title"),
 			Author:   helper.GetString(owner, "name"),
-			Duration: formatDuration(helper.GetInt(m, "duration")),
+			Duration: helper.FormatDuration(helper.GetInt(m, "duration")),
 		})
 	}
 	return items, nil
@@ -913,7 +913,7 @@ func (c *Client) GetSelfInfo() (*UserInfo, error) {
 	}
 
 	d := helper.GetMap(data, "data")
-	if !getBool(d, "isLogin") {
+	if !helper.GetBool(d, "isLogin") {
 		return nil, aiverr.NotAuthenticated("bilibili", "not logged in")
 	}
 
@@ -1214,53 +1214,4 @@ func isRiskControlError(err error) bool {
 		return pe.Code == aiverr.CodeRateLimited && strings.Contains(pe.Message, "-352")
 	}
 	return strings.Contains(err.Error(), "-352")
-}
-
-func getFloat(m map[string]interface{}, key string) float64 {
-	if m == nil {
-		return 0
-	}
-	val, ok := m[key]
-	if !ok {
-		return 0
-	}
-	switch v := val.(type) {
-	case float64:
-		return v
-	case int:
-		return float64(v)
-	}
-	return 0
-}
-
-func getBool(m map[string]interface{}, key string) bool {
-	if m == nil {
-		return false
-	}
-	val, ok := m[key]
-	if !ok {
-		return false
-	}
-	b, _ := val.(bool)
-	return b
-}
-
-func formatDuration(seconds int) string {
-	if seconds < 0 {
-		seconds = 0
-	}
-	if seconds >= 3600 {
-		h := seconds / 3600
-		m := (seconds % 3600) / 60
-		s := seconds % 60
-		return fmt.Sprintf("%d:%02d:%02d", h, m, s)
-	}
-	m := seconds / 60
-	s := seconds % 60
-	return fmt.Sprintf("%02d:%02d", m, s)
-}
-
-func stripHTML(text string) string {
-	re := regexp.MustCompile(`<[^>]+>`)
-	return strings.TrimSpace(re.ReplaceAllString(text, ""))
 }

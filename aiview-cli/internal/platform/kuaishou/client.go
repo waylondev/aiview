@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/cache"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
@@ -42,6 +44,14 @@ func (c *Client) PlatformName() string {
 	return "kuaishou"
 }
 
+// truncateBody truncates a string to maxLen characters, appending "..." if truncated.
+func truncateBody(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
+}
+
 // get sends a GET request to the specified path.
 func (c *Client) get(path string, params url.Values) (map[string]interface{}, error) {
 	u := baseURL + path
@@ -59,7 +69,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("kuaishou", fmt.Sprintf("failed to create request: %v", err))
 	}
 
 	req.Header.Set("User-Agent", userAgent)
@@ -71,17 +81,30 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, aiverr.NetworkError("kuaishou", fmt.Sprintf("request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, aiverr.NetworkError("kuaishou", fmt.Sprintf("failed to read response body: %v", err))
+	}
+
+	// Detect HTML response (indicates authentication required)
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<!DOCTYPE") || strings.Contains(bodyStr, "<html") {
+		return nil, aiverr.NotAuthenticated("kuaishou", "API returned HTML instead of JSON; authentication may be required").WithHTTPStatus(resp.StatusCode)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+		switch resp.StatusCode {
+		case 401, 403:
+			return nil, aiverr.NotAuthenticated("kuaishou", "Authentication required").WithHTTPStatus(resp.StatusCode)
+		case 429:
+			return nil, aiverr.RateLimited("kuaishou", "Request too frequent").WithHTTPStatus(resp.StatusCode)
+		default:
+			return nil, aiverr.APIError("kuaishou", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, truncateBody(bodyStr, 200))).WithHTTPStatus(resp.StatusCode)
+		}
 	}
 
 	var result map[string]interface{}
@@ -97,7 +120,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 // checkAuth verifies that the client has authentication credentials.
 func (c *Client) checkAuth() error {
 	if c.cookies == "" {
-		return fmt.Errorf("请先执行 'aiview kuaishou login --cookie <cookie>' 登录")
+		return aiverr.NotAuthenticated("kuaishou", "Authentication required").WithSuggestion("Please login with: aiview kuaishou login --cookie <cookie>")
 	}
 	return nil
 }
