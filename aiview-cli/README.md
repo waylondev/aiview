@@ -1,6 +1,73 @@
-# Aiview CLI — Bilibili CLI Tool
+# Aiview CLI — 多平台内容 CLI 工具
 
-A feature-rich command-line tool for interacting with Bilibili, built in Go with Cobra. Supports video browsing, user queries, social interactions, audio downloading, and more.
+A feature-rich command-line tool for Bilibili and Douyin (抖音), built in Go with Cobra. Supports video browsing, user queries, social interactions, and more.
+
+## Architecture
+
+```
+aiview-cli/
+├── main.go                          # 入口，调用 root.Execute()
+├── root.go                          # 根命令，注册平台命令 + 全局 flag
+├── commands/
+│   ├── bilibili/                    # Bilibili 子命令层
+│   │   ├── types.go                 #   Client 接口 | 类型定义
+│   │   ├── video.go, user.go, ...   #   各命令实现
+│   └── douyin/                      # Douyin 子命令层
+│       ├── types.go                 #   Client 接口 | 类型定义
+│       ├── hot.go, video.go, ...    #   各命令实现
+├── internal/
+│   ├── platform/
+│   │   ├── platform.go              #   Platform 接口定义
+│   │   ├── registry.go              #   全局平台注册器
+│   │   ├── bilibili/
+│   │   │   ├── bilibili.go          #   BilibiliPlatform: Commands() + 委托
+│   │   │   ├── client.go            #   HTTP Client → Bilibili API
+│   │   │   ├── auth.go, login.go    #   认证 & 登录
+│   │   │   └── bilibilitypes/       #   共享类型 (VideoInfo, Credential...)
+│   │   └── douyin/
+│   │       ├── douyin.go            #   DouyinPlatform: Commands() + 委托
+│   │       ├── client.go            #   HTTP Client → Douyin API
+│   │       └── auth.go              #   Cookie 持久化
+│   ├── output/                      # JSON/YAML/Text 输出格式化
+│   └── config/                      # 配置加载 (viper)
+└── docs/                            # 文档
+    ├── TEST_REPORT_BILIBILI.md
+    └── TEST_REPORT_DOUYIN.md
+```
+
+### Layered Architecture
+
+```mermaid
+graph TD
+    A["main.go / root.go<br/>入口 & 全局 Flag"] --> B["commands/<br/>命令层"]
+    B --> C["internal/platform/<br/>平台抽象层"]
+    C --> D["internal/platform/bilibili<br/>Bilibili Client"]
+    C --> E["internal/platform/douyin<br/>Douyin Client"]
+    D --> F["Bilibili API<br/>(api.bilibili.com)"]
+    E --> G["Douyin API<br/>(www.douyin.com)"]
+    B --> H["internal/output<br/>输出格式化"]
+    H --> I["终端 (JSON / YAML / Text)"]
+```
+
+### Request Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Cobra Parser
+    participant P as Platform Registry
+    participant CMD as Cobra Command
+    participant API as HTTP Client
+    participant F as Formatter
+
+    U->>C: $ aiview bilibili video BVxxx --json
+    C->>P: 遍历 platform.All()
+    P->>CMD: p.Commands() → AddCommand
+    C->>CMD: RunE(cmd, args)
+    CMD->>API: client.GetVideoDetail("BVxxx")
+    API->>F: map[string]interface{} 结果
+    F->>U: JSON 格式化输出
+```
 
 ## Quick Start
 
@@ -129,7 +196,7 @@ go build -o aiview-cli.exe .
 
 ## Douyin Platform
 
-Basic read-only commands for Douyin (抖音) content discovery.
+Commands for Douyin (抖音) content discovery and video/user data.
 
 ### Commands
 
@@ -138,16 +205,20 @@ Basic read-only commands for Douyin (抖音) content discovery.
 | `hot` | `douyin hot [--json\|--yaml]` | ✅ Done | View trending/hot search on Douyin |
 | `trending` | `douyin trending [--json\|--yaml]` | ✅ Done | View trending topics/challenges |
 | `search` | `douyin search <keyword> [--page N] [--count N]` | ⚠️ Partial | Search Douyin content (requires cookies for full results) |
-| `video` | `douyin video <share_url>` | 🔘 Not Tested | View video details (requires login) |
-| `user` | `douyin user <uid>` | 🔘 Not Tested | View user info (requires login) |
+| `video` | `douyin video <video_id\|share_url>` | ⚠️ Cookie | View video details (requires login) |
+| `user` | `douyin user <uid>` | ⚠️ Cookie | View user profile info (requires login) |
+| `comment` | `douyin comment <video_id> [--cursor N]` | ⚠️ Cookie | View video comments (requires login) |
+| `user-posts` | `douyin user-posts <uid> [--cursor N]` | ⚠️ Cookie | View user's video posts (requires login) |
+| `login` | `douyin login --cookie <cookie>` | ✅ Done | Login with browser cookie |
+| `status` | `douyin status` | ✅ Done | Check login status |
+| `logout` | `douyin logout` | ✅ Done | Clear saved credentials |
 
 ### Notes
 - `hot` and `trending` work without authentication
+- `video`, `user`, `comment`, `user-posts` require `douyin login --cookie <cookie>` first
 - `search` returns limited results without cookies
-- `video` and `user` commands require cookie-based authentication
 
-### TODO
-- [ ] Add cookie-based login support
-- [ ] Implement video detail parsing
-- [ ] Implement user profile parsing
-- [ ] Add search result display with pagination
+## Test Reports
+
+- [Bilibili 平台测试报告](docs/TEST_REPORT_BILIBILI.md)
+- [Douyin 平台测试报告](docs/TEST_REPORT_DOUYIN.md)
