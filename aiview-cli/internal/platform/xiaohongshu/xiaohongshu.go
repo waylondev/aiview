@@ -11,12 +11,15 @@ import (
 // XiaohongshuPlatform implements the platform.Platform interface for Xiaohongshu.
 type XiaohongshuPlatform struct {
 	config       *config.Config
+	authStore    *AuthStore
 	cachedClient *Client
 }
 
 // NewPlatform creates a new Xiaohongshu platform instance.
 func NewPlatform() *XiaohongshuPlatform {
-	return &XiaohongshuPlatform{}
+	return &XiaohongshuPlatform{
+		authStore: NewAuthStore(),
+	}
 }
 
 func init() {
@@ -43,6 +46,9 @@ func (p *XiaohongshuPlatform) Commands() []*cobra.Command {
 	}
 
 	c := p.getClient()
+	xhsCommand.AddCommand(xhsCmd.NewLoginCmd(p.SaveCookie, func() xhsCmd.Client {
+		return NewClient(30, p.authStore.GetCookie())
+	}))
 	xhsCommand.AddCommand(xhsCmd.NewHotCmd(c))
 	xhsCommand.AddCommand(xhsCmd.NewSearchCmd(c))
 	xhsCommand.AddCommand(xhsCmd.NewNoteCmd(c))
@@ -51,7 +57,7 @@ func (p *XiaohongshuPlatform) Commands() []*cobra.Command {
 	return []*cobra.Command{xhsCommand}
 }
 
-// getClient lazily creates and caches a client using the current config timeout.
+// getClient lazily creates and caches a client using the current credential and config timeout.
 func (p *XiaohongshuPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
@@ -61,6 +67,11 @@ func (p *XiaohongshuPlatform) getClient() *Client {
 		// Xiaohongshu doesn't have its own config yet, use default
 		timeout = 30
 	}
-	p.cachedClient = NewClient(timeout)
+	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
 	return p.cachedClient
+}
+
+// SaveCookie saves the Xiaohongshu cookie to local credential storage.
+func (p *XiaohongshuPlatform) SaveCookie(cookie string) error {
+	return p.authStore.SaveCookie(cookie)
 }

@@ -5,24 +5,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
-	baseURL = "https://edith.xiaohongshu.com"
+	baseURL   = "https://edith.xiaohongshu.com"
+	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 )
 
 // Client is the Xiaohongshu API client.
 type Client struct {
 	httpClient *http.Client
+	cookies    string
 }
 
 // NewClient creates a new Xiaohongshu API client.
-func NewClient(timeoutSec int) *Client {
+func NewClient(timeoutSec int, cookies string) *Client {
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: time.Duration(timeoutSec) * time.Second,
 		},
+		cookies: cookies,
 	}
 }
 
@@ -45,9 +49,18 @@ func (c *Client) get(path string, params map[string]string) (map[string]interfac
 	}
 	req.URL.RawQuery = q.Encode()
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+	// Set browser-like headers to avoid HTML responses
+	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Referer", "https://www.xiaohongshu.com")
 	req.Header.Set("Origin", "https://www.xiaohongshu.com")
+	req.Header.Set("Accept", "application/json, text/plain, */*")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Set("sec-ch-ua", `"Chromium";v="133", "Not(A:Brand";v="99", "Google Chrome";v="133"`)
+	req.Header.Set("sec-ch-ua-mobile", "?0")
+	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
+	if c.cookies != "" {
+		req.Header.Set("Cookie", c.cookies)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -60,12 +73,40 @@ func (c *Client) get(path string, params map[string]string) (map[string]interfac
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
+	}
+
+	return c.parseResponse(resp.Header.Get("Content-Type"), body)
+}
+
+// parseResponse detects HTML responses and returns a friendly error, otherwise parses JSON.
+func (c *Client) parseResponse(contentType string, body []byte) (map[string]interface{}, error) {
+	bodyStr := string(body)
+	trimmed := strings.TrimSpace(bodyStr)
+
+	// Detect HTML response (API returns login page or error page instead of JSON)
+	if strings.Contains(contentType, "text/html") ||
+		strings.HasPrefix(trimmed, "<!DOCTYPE") ||
+		strings.HasPrefix(trimmed, "<html") ||
+		strings.HasPrefix(trimmed, "<!doctype") {
+		return nil, fmt.Errorf("xiaohongshu API returned HTML instead of JSON; authentication may be required. Please run: aiview xiaohongshu login --cookie <your_cookie>")
+	}
+
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, fmt.Errorf("parse response: %w (body starts with: %s)", err, truncate(bodyStr, 100))
 	}
 
 	return result, nil
+}
+
+// truncate shortens a string to maxLen characters.
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 // GetHotNotes returns hot/trending notes.
