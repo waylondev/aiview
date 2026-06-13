@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/jackwener/aiview/internal/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -114,6 +115,25 @@ func EmitError(code, message string, format Format) bool {
 	}
 	emitEnvelope(env, format)
 	return false
+}
+
+// EmitPlatformError outputs a structured PlatformError with full details.
+func EmitPlatformError(err error, format Format) bool {
+	if pe, ok := aiverr.IsPlatformError(err); ok {
+		env := Envelope{
+			OK:            false,
+			SchemaVersion: SchemaVersion,
+			Error: &ErrorInfo{
+				Code:    pe.Code,
+				Message: pe.Message,
+				Details: pe.Details,
+			},
+		}
+		emitEnvelope(env, format)
+		return false
+	}
+	// Fallback for non-PlatformError
+	return EmitError("unknown_error", err.Error(), format)
 }
 
 func emitEnvelope(env Envelope, format Format) error {

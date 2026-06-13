@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/pipeline"
 	"github.com/jackwener/aiview/internal/storage"
@@ -31,14 +32,21 @@ func (dc *douyinCollector) Collect(recordType string) (map[string]interface{}, e
 }
 
 // NewCollectCmd creates the collect command for douyin.
-func NewCollectCmd(getClient func() Client) *cobra.Command {
+func NewCollectCmd(getClient func() Client, isLoggedIn func() bool) *cobra.Command {
 	var types string
 	var storeType string
 
 	cmd := &cobra.Command{
 		Use:   "collect",
 		Short: "Batch collect and store data",
+		Long: `Batch collect and store data from Douyin.
+
+Requires login cookie for full access.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			client := getClient()
 			format := output.GetFormat(cmd)
 

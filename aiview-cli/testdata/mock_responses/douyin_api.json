@@ -1,0 +1,20 @@
+{
+  "status_code": 0,
+  "status_msg": "",
+  "data": {
+    "word_list": [
+      {
+        "word": "测试热词 1",
+        "hot_value": 50000,
+        "event_time": 1718236800,
+        "label": 1
+      },
+      {
+        "word": "测试热词 2",
+        "hot_value": 30000,
+        "event_time": 1718236800,
+        "label": 2
+      }
+    ]
+  }
+}

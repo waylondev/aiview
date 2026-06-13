@@ -22,7 +22,7 @@ func (m *mockClient) GetUserPosts(uid string, cursor int) (map[string]interface{
 func (m *mockClient) GetUserInfo(uid string) (map[string]interface{}, error) { return nil, nil }
 
 func TestNewHotCmd_CreatesCommand(t *testing.T) {
-	cmd := NewHotCmd(&mockClient{})
+	cmd := NewHotCmd(&mockClient{}, func() bool { return true })
 	if cmd == nil {
 		t.Fatal("NewHotCmd returned nil")
 	}
@@ -32,7 +32,7 @@ func TestNewHotCmd_CreatesCommand(t *testing.T) {
 }
 
 func TestNewTrendingCmd_CreatesCommand(t *testing.T) {
-	cmd := NewTrendingCmd(&mockClient{})
+	cmd := NewTrendingCmd(&mockClient{}, func() bool { return true })
 	if cmd == nil {
 		t.Fatal("NewTrendingCmd returned nil")
 	}

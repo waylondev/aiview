@@ -3,6 +3,7 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/helper"
 
 	"github.com/jackwener/aiview/internal/output"
@@ -10,7 +11,7 @@ import (
 )
 
 // NewSearchCmd creates the search command.
-func NewSearchCmd(client Client) *cobra.Command {
+func NewSearchCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	var (
 		page  int
 		count int
@@ -21,11 +22,17 @@ func NewSearchCmd(client Client) *cobra.Command {
 		Short: "Search content on Douyin",
 		Long: `Search for videos and users on Douyin by keyword.
 
+Requires login cookie for full access.
+
 Examples:
   aiview douyin search 美食
   aiview douyin search music --page 2 --count 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 			keyword := args[0]
 

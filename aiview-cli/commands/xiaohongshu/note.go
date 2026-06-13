@@ -3,22 +3,29 @@ package xiaohongshu
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewNoteCmd creates the note detail command.
-func NewNoteCmd(client Client) *cobra.Command {
+func NewNoteCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "note <note_id>",
 		Short: "Show note detail",
 		Long: `Show details of a Xiaohongshu note by note ID.
+
+Requires login cookie for full access.
 
 Examples:
   aiview xiaohongshu note 123456789
   aiview xiaohongshu note abcdef123456`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("xiaohongshu", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			result, err := client.GetNoteDetail(args[0])

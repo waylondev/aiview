@@ -6,9 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jackwener/aiview/internal/cache"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
@@ -66,7 +68,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("douyin", fmt.Sprintf("failed to create request: %v", err))
 	}
 
 	req.Header.Set("User-Agent", userAgent)
@@ -77,23 +79,45 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, aiverr.NetworkError("douyin", fmt.Sprintf("request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, aiverr.NetworkError("douyin", fmt.Sprintf("failed to read response body: %v", err))
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+		bodyStr := string(body)
+		// Check for authentication errors
+		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+			return nil, aiverr.NotAuthenticated("douyin", "Authentication required").
+				WithHTTPStatus(resp.StatusCode).
+				WithCommand("video")
+		}
+		// Check for rate limiting
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, aiverr.RateLimited("douyin", "Request too frequent").
+				WithHTTPStatus(resp.StatusCode)
+		}
+		// Check for HTML response (authentication page)
+		if strings.Contains(bodyStr, "<!DOCTYPE") || strings.Contains(bodyStr, "<html") {
+			return nil, aiverr.NotAuthenticated("douyin", "API returned HTML instead of JSON; authentication may be required").
+				WithHTTPStatus(resp.StatusCode)
+		}
+		return nil, aiverr.APIError("douyin", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, bodyStr)).
+			WithHTTPStatus(resp.StatusCode)
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		// Try parsing as raw response
-		result = map[string]interface{}{"raw": string(body)}
+		bodyStr := string(body)
+		if strings.Contains(bodyStr, "<!DOCTYPE") || strings.Contains(bodyStr, "<html") {
+			return nil, aiverr.NotAuthenticated("douyin", "API returned HTML instead of JSON; authentication may be required")
+		}
+		result = map[string]interface{}{"raw": bodyStr}
 	}
 
 	// Store in cache
@@ -122,7 +146,8 @@ func (c *Client) GetTrending() (map[string]interface{}, error) {
 // checkAuth verifies that the client has authentication credentials.
 func (c *Client) checkAuth() error {
 	if c.cookies == "" {
-		return fmt.Errorf("请先执行 'aiview douyin login --cookie <cookie>' 登录")
+		return aiverr.NotAuthenticated("douyin", "Authentication required").
+			WithSuggestion("Please login with: aiview douyin login --cookie <cookie>")
 	}
 	return nil
 }

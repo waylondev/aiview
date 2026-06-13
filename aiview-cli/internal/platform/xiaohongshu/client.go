@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	aiverr "github.com/jackwener/aiview/internal/errors"
 )
 
 const (
@@ -40,7 +42,7 @@ func (c *Client) get(path string, params map[string]string) (map[string]interfac
 	url := baseURL + path
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
+		return nil, aiverr.NetworkError("xiaohongshu", fmt.Sprintf("create request: %v", err))
 	}
 
 	q := req.URL.Query()
@@ -64,17 +66,29 @@ func (c *Client) get(path string, params map[string]string) (map[string]interfac
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, aiverr.NetworkError("xiaohongshu", fmt.Sprintf("request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, aiverr.NetworkError("xiaohongshu", fmt.Sprintf("read response: %v", err))
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
+		bodyStr := truncate(string(body), 200)
+		// Check for authentication errors
+		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+			return nil, aiverr.NotAuthenticated("xiaohongshu", "Authentication required").
+				WithHTTPStatus(resp.StatusCode)
+		}
+		// Check for rate limiting
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, aiverr.RateLimited("xiaohongshu", "Request too frequent").
+				WithHTTPStatus(resp.StatusCode)
+		}
+		return nil, aiverr.APIError("xiaohongshu", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, bodyStr)).
+			WithHTTPStatus(resp.StatusCode)
 	}
 
 	return c.parseResponse(resp.Header.Get("Content-Type"), body)
@@ -90,12 +104,13 @@ func (c *Client) parseResponse(contentType string, body []byte) (map[string]inte
 		strings.HasPrefix(trimmed, "<!DOCTYPE") ||
 		strings.HasPrefix(trimmed, "<html") ||
 		strings.HasPrefix(trimmed, "<!doctype") {
-		return nil, fmt.Errorf("xiaohongshu API returned HTML instead of JSON; authentication may be required. Please run: aiview xiaohongshu login --cookie <your_cookie>")
+		return nil, aiverr.NotAuthenticated("xiaohongshu", "API returned HTML instead of JSON; authentication may be required").
+			WithSuggestion("Please login with: aiview xiaohongshu login --cookie <your_cookie>")
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("parse response: %w (body starts with: %s)", err, truncate(bodyStr, 100))
+		return nil, aiverr.ParseError("xiaohongshu", fmt.Sprintf("Failed to parse JSON response: %v", err))
 	}
 
 	return result, nil

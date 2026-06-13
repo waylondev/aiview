@@ -22,7 +22,7 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -75,7 +75,7 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -131,7 +131,7 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -178,7 +178,7 @@ func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Co
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

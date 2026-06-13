@@ -46,21 +46,24 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 	}
 
 	c := p.getClient()
+	isLoggedIn := func() bool {
+		return p.authStore.GetCookie() != ""
+	}
 	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie, func() douyinCommands.Client {
 		return NewClient(30, p.authStore.GetCookie())
 	}))
-	douyinCmd.AddCommand(douyinCommands.NewHotCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewVideoCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewUserCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewCommentCmd(c))
-	douyinCmd.AddCommand(douyinCommands.NewUserPostsCmd(c))
+	douyinCmd.AddCommand(douyinCommands.NewHotCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewSearchCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewVideoCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewUserCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewCommentCmd(c, isLoggedIn))
+	douyinCmd.AddCommand(douyinCommands.NewUserPostsCmd(c, isLoggedIn))
 	douyinCmd.AddCommand(douyinCommands.NewStatusCmd(func() (map[string]interface{}, error) { return p.Status() }))
 	douyinCmd.AddCommand(douyinCommands.NewLogoutCmd(func() error { return p.Logout() }))
 	douyinCmd.AddCommand(douyinCommands.NewCollectCmd(func() douyinCommands.Client {
 		return NewClient(30, p.authStore.GetCookie())
-	}))
+	}, isLoggedIn))
 
 	return []*cobra.Command{douyinCmd}
 }

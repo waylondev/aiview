@@ -3,6 +3,7 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/helper"
 
 	"github.com/jackwener/aiview/internal/output"
@@ -10,7 +11,7 @@ import (
 )
 
 // NewUserPostsCmd creates the user-posts command.
-func NewUserPostsCmd(client Client) *cobra.Command {
+func NewUserPostsCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	var cursor int
 
 	cmd := &cobra.Command{
@@ -25,6 +26,10 @@ Examples:
   aiview douyin user-posts 123456789 --cursor 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			result, err := client.GetUserPosts(args[0], cursor)

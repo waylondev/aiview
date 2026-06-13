@@ -45,7 +45,7 @@ func NewCommentCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 			if message != "" {
 				cred, err := authStore.RequireCredential(true)
 				if err != nil {
-					output.EmitError("not_authenticated", "Login with write permission required to post comments", format)
+					output.EmitError("not_authenticated", err.Error(), format)
 					return err
 				}
 				_ = cred
@@ -129,7 +129,7 @@ func NewCommentDeleteCmd(authStore AuthProvider, getClient func() Client) *cobra
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

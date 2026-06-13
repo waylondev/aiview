@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackwener/aiview/internal/cache"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
@@ -89,13 +90,13 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
 	req.Header = c.buildHeaders()
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("network request failed: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
@@ -112,7 +113,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 		}
 		retryResp, err := c.httpClient.Do(retryReq)
 		if err != nil {
-			return nil, fmt.Errorf("network request failed on retry: %w", err)
+			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
 		}
 		defer retryResp.Body.Close()
 		result, err = c.parseResponse(retryResp)
@@ -136,13 +137,13 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
 	req.Header = c.buildRefererHeaders(referer)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("network request failed: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
@@ -159,7 +160,7 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 		}
 		retryResp, err := c.httpClient.Do(retryReq)
 		if err != nil {
-			return nil, fmt.Errorf("network request failed on retry: %w", err)
+			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
 		}
 		defer retryResp.Body.Close()
 		return c.parseResponse(retryResp)
@@ -170,7 +171,7 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read response: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to read response: %v", err))
 	}
 
 	// 检测 HTML 响应（直播间不存在或已关闭等情况）
@@ -179,27 +180,33 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, err
 	if strings.Contains(contentType, "text/html") ||
 		strings.HasPrefix(strings.TrimSpace(bodyStr), "<!DOCTYPE") ||
 		strings.HasPrefix(strings.TrimSpace(bodyStr), "<html") {
-		return nil, fmt.Errorf("直播间不存在或已关闭")
+		return nil, aiverr.NotFound("bilibili", "直播间不存在或已关闭")
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, aiverr.ParseError("bilibili", fmt.Sprintf("Failed to parse response: %v", err))
 	}
 
 	code := helper.GetInt(result, "code")
 	if code != 0 {
 		msg := helper.GetString(result, "message")
 		if code == -101 || code == -111 {
-			return nil, fmt.Errorf("not_authenticated: %s", msg)
+			return nil, aiverr.NotAuthenticated("bilibili", msg)
 		}
 		if code == -404 || code == 62002 || code == 62004 {
-			return nil, fmt.Errorf("not_found: %s", msg)
+			return nil, aiverr.NotFound("bilibili", msg)
 		}
 		if code == -412 || code == 412 {
-			return nil, fmt.Errorf("rate_limited: %s", msg)
+			return nil, aiverr.RateLimited("bilibili", msg)
 		}
-		return nil, fmt.Errorf("API error [%d]: %s", code, msg)
+		if code == -352 {
+			return nil, aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
+		}
+		if code == -403 || code == 403 {
+			return nil, aiverr.Forbidden("bilibili", msg)
+		}
+		return nil, aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
 	}
 
 	return result, nil
@@ -213,40 +220,46 @@ func (c *Client) post(path string, params url.Values) (map[string]interface{}, e
 	body := params.Encode()
 	req, err := http.NewRequest("POST", baseURL+path, strings.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
 	req.Header = c.buildHeaders()
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("network request failed: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read response: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to read response: %v", err))
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, aiverr.ParseError("bilibili", fmt.Sprintf("Failed to parse response: %v", err))
 	}
 
 	code := helper.GetInt(result, "code")
 	if code != 0 {
 		msg := helper.GetString(result, "message")
 		if code == -101 || code == -111 {
-			return nil, fmt.Errorf("not_authenticated: %s", msg)
+			return nil, aiverr.NotAuthenticated("bilibili", msg)
 		}
 		if code == -404 || code == 62002 || code == 62004 {
-			return nil, fmt.Errorf("not_found: %s", msg)
+			return nil, aiverr.NotFound("bilibili", msg)
 		}
 		if code == -412 || code == 412 {
-			return nil, fmt.Errorf("rate_limited: %s", msg)
+			return nil, aiverr.RateLimited("bilibili", msg)
 		}
-		return nil, fmt.Errorf("API error [%d]: %s", code, msg)
+		if code == -352 {
+			return nil, aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
+		}
+		if code == -403 || code == 403 {
+			return nil, aiverr.Forbidden("bilibili", msg)
+		}
+		return nil, aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
 	}
 
 	return result, nil
@@ -901,7 +914,7 @@ func (c *Client) GetSelfInfo() (*UserInfo, error) {
 
 	d := helper.GetMap(data, "data")
 	if !getBool(d, "isLogin") {
-		return nil, fmt.Errorf("not_authenticated: not logged in")
+		return nil, aiverr.NotAuthenticated("bilibili", "not logged in")
 	}
 
 	return &UserInfo{
@@ -936,7 +949,7 @@ func (c *Client) GetAudioURL(bvid string) (string, error) {
 	audio := helper.GetSlice(dash, "audio")
 
 	if len(audio) == 0 {
-		return "", fmt.Errorf("not_found: unable to get audio stream")
+		return "", aiverr.NotFound("bilibili", "unable to get audio stream")
 	}
 
 	// Get the best quality audio
@@ -992,13 +1005,13 @@ func (c *Client) GetVideoDanmaku(cid int) ([]byte, error) {
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
 	req.Header = c.buildHeaders()
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("network request failed: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
 	defer resp.Body.Close()
 
@@ -1055,7 +1068,7 @@ func (c *Client) GetRecommendVideos(fresh bool, page int) (map[string]interface{
 		}
 		lastErr = err
 		// Check if rate limited
-		if strings.Contains(err.Error(), "rate_limited") {
+		if pe, ok := aiverr.IsPlatformError(err); ok && pe.Code == aiverr.CodeRateLimited {
 			time.Sleep(time.Duration(2*(i+1)) * time.Second)
 			continue
 		}
@@ -1197,7 +1210,10 @@ func isRiskControlError(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), "API error [-352]")
+	if pe, ok := aiverr.IsPlatformError(err); ok {
+		return pe.Code == aiverr.CodeRateLimited && strings.Contains(pe.Message, "-352")
+	}
+	return strings.Contains(err.Error(), "-352")
 }
 
 func getFloat(m map[string]interface{}, key string) float64 {

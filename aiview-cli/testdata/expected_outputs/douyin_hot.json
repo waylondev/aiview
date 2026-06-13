@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "data": {
+    "timestamp": "2026-06-13T10:00:00Z",
+    "platform": "douyin",
+    "items": [
+      {
+        "id": 1,
+        "title": "测试抖音视频标题 1",
+        "author": "抖音作者 1",
+        "digg_count": 15000,
+        "comment_count": 800,
+        "share_count": 300,
+        "play_count": 500000,
+        "url": "https://www.douyin.com/video/1234567890"
+      },
+      {
+        "id": 2,
+        "title": "测试抖音视频标题 2",
+        "author": "抖音作者 2",
+        "digg_count": 25000,
+        "comment_count": 1200,
+        "share_count": 500,
+        "play_count": 800000,
+        "url": "https://www.douyin.com/video/0987654321"
+      }
+    ]
+  },
+  "message": "success"
+}

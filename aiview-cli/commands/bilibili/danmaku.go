@@ -115,7 +115,7 @@ func NewDanmakuSendCmd(authStore AuthProvider, getClient func() Client) *cobra.C
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

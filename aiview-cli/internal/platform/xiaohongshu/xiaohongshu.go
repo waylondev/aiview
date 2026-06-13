@@ -46,13 +46,16 @@ func (p *XiaohongshuPlatform) Commands() []*cobra.Command {
 	}
 
 	c := p.getClient()
+	isLoggedIn := func() bool {
+		return p.authStore.GetCookie() != ""
+	}
 	xhsCommand.AddCommand(xhsCmd.NewLoginCmd(p.SaveCookie, func() xhsCmd.Client {
 		return NewClient(30, p.authStore.GetCookie())
 	}))
-	xhsCommand.AddCommand(xhsCmd.NewHotCmd(c))
-	xhsCommand.AddCommand(xhsCmd.NewSearchCmd(c))
-	xhsCommand.AddCommand(xhsCmd.NewNoteCmd(c))
-	xhsCommand.AddCommand(xhsCmd.NewUserCmd(c))
+	xhsCommand.AddCommand(xhsCmd.NewHotCmd(c, isLoggedIn))
+	xhsCommand.AddCommand(xhsCmd.NewSearchCmd(c, isLoggedIn))
+	xhsCommand.AddCommand(xhsCmd.NewNoteCmd(c, isLoggedIn))
+	xhsCommand.AddCommand(xhsCmd.NewUserCmd(c, isLoggedIn))
 
 	return []*cobra.Command{xhsCommand}
 }

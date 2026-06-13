@@ -221,7 +221,7 @@ func NewWhoamiCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 
 			info, err := client.GetSelfInfo()
 			if err != nil {
-				output.EmitError("not_authenticated", "Not logged in, use aiview bilibili login to log in", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 

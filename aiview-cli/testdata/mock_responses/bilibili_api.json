@@ -1,0 +1,42 @@
+{
+  "code": 0,
+  "message": "0",
+  "ttl": 1,
+  "data": {
+    "tlist": [
+      {
+        "tid": 1,
+        "name": "测试分类 1",
+        "count": 100
+      },
+      {
+        "tid": 2,
+        "name": "测试分类 2",
+        "count": 200
+      }
+    ],
+    "list": [
+      {
+        "aid": 1234567890,
+        "bvid": "BV1234567890",
+        "title": "测试视频标题 1",
+        "owner": {
+          "mid": 10001,
+          "name": "UP 主 1",
+          "face": "https://example.com/face1.jpg"
+        },
+        "stat": {
+          "view": 10000,
+          "danmaku": 500,
+          "reply": 200,
+          "favorite": 150,
+          "coin": 300,
+          "share": 100,
+          "like": 2000
+        },
+        "pubdate": 1718236800,
+        "ctime": 1718236800
+      }
+    ]
+  }
+}

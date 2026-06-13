@@ -30,7 +30,7 @@ Examples:
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

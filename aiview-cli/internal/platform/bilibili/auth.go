@@ -79,13 +79,13 @@ func (a *AuthStore) GetCredentialOrNil() *Credential {
 func (a *AuthStore) RequireCredential(requireWrite bool) (*Credential, error) {
 	cred, err := a.GetCredential()
 	if err != nil {
-		return nil, fmt.Errorf("not_authenticated: not logged in, use aiview bilibili login")
+		return nil, &auth.NotAuthenticatedError{Platform: "bilibili"}
 	}
 	if cred == nil {
-		return nil, fmt.Errorf("not_authenticated: not logged in, use aiview bilibili login")
+		return nil, &auth.NotAuthenticatedError{Platform: "bilibili"}
 	}
 	if requireWrite && !cred.HasWriteCapability() {
-		return nil, fmt.Errorf("permission_denied: current credential does not support write operations, please log in again")
+		return nil, &auth.WritePermissionError{Platform: "bilibili"}
 	}
 	return cred, nil
 }

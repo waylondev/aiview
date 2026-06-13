@@ -23,7 +23,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -71,7 +71,7 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -113,7 +113,7 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred
@@ -152,7 +152,7 @@ func NewUnfollowCmd(authStore AuthProvider, getClient func() Client) *cobra.Comm
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login with write permission required", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

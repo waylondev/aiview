@@ -1,0 +1,122 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: E2E Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.21']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build binary
+        run: go build -o aiview .
+        working-directory: .
+
+      - name: Run E2E tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/test_all.sh
+          bash scripts/test_all.sh --skip-build
+        continue-on-error: true
+
+      - name: Run E2E tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\scripts\test_all.ps1 -SkipBuild
+        continue-on-error: true
+
+      - name: Generate test report (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/generate_report.sh
+          bash scripts/generate_report.sh
+        continue-on-error: true
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.os }}
+          path: |
+            docs/TEST_REPORT_AUTO.md
+          retention-days: 30
+
+      - name: Upload binary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aiview-binary-${{ matrix.os }}
+          path: |
+            aiview
+            aiview.exe
+          retention-days: 7
+          if-no-files-found: ignore
+
+  lint:
+    name: Lint & Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Run unit tests
+        run: go test -v -coverprofile=coverage.out ./...
+
+      - name: Coverage report
+        run: go tool cover -func=coverage.out
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 30

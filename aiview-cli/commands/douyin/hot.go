@@ -3,6 +3,7 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/helper"
 
 	"github.com/jackwener/aiview/internal/output"
@@ -10,17 +11,23 @@ import (
 )
 
 // NewHotCmd creates the hot search command.
-func NewHotCmd(client Client) *cobra.Command {
+func NewHotCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	return &cobra.Command{
 		Use:   "hot",
 		Short: "View trending/hot search on Douyin",
 		Long: `View the current hot search/trending list on Douyin.
+
+Requires login cookie for full access.
 
 Examples:
   aiview douyin hot
   aiview douyin hot --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			result, err := client.GetHotSearch()

@@ -1,0 +1,29 @@
+{
+  "code": 0,
+  "success": true,
+  "msg": "success",
+  "data": {
+    "items": [
+      {
+        "id": "1234567890",
+        "title": "测试小红书笔记标题 1",
+        "desc": "这是测试笔记描述 1",
+        "type": "normal",
+        "user": {
+          "id": "10001",
+          "nickname": "小红书博主 1",
+          "avatar": "https://example.com/avatar1.jpg"
+        },
+        "interact_info": {
+          "liked_count": "5000",
+          "collected_count": "2000",
+          "comment_count": "300",
+          "share_count": "150"
+        },
+        "time": 1718236800,
+        "last_update_time": 1718236800
+      }
+    ],
+    "has_more": true
+  }
+}

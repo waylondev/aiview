@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ func extractVideoID(input string) (string, error) {
 }
 
 // NewVideoCmd creates the video command.
-func NewVideoCmd(client Client) *cobra.Command {
+func NewVideoCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	return &cobra.Command{
 		Use:   "video <share_url_or_id>",
 		Short: "View Douyin video details",
@@ -39,6 +40,10 @@ Examples:
   aiview douyin video 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			videoID, err := extractVideoID(args[0])

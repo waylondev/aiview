@@ -97,7 +97,7 @@ func NewFeedCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
-				output.EmitError("not_authenticated", "Login required, use aiview bilibili login", format)
+				output.EmitError("not_authenticated", err.Error(), format)
 				return err
 			}
 			_ = cred

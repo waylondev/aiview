@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "data": {
+    "timestamp": "2026-06-13T10:00:00Z",
+    "platform": "bilibili",
+    "items": [
+      {
+        "id": 1,
+        "title": "测试视频标题 1",
+        "author": "UP 主 1",
+        "view": 10000,
+        "danmaku": 500,
+        "reply": 200,
+        "favorite": 150,
+        "coin": 300,
+        "share": 100,
+        "like": 2000,
+        "url": "https://www.bilibili.com/video/BV1234567890"
+      },
+      {
+        "id": 2,
+        "title": "测试视频标题 2",
+        "author": "UP 主 2",
+        "view": 20000,
+        "danmaku": 800,
+        "reply": 350,
+        "favorite": 280,
+        "coin": 500,
+        "share": 180,
+        "like": 3500,
+        "url": "https://www.bilibili.com/video/BV0987654321"
+      }
+    ]
+  },
+  "message": "success"
+}

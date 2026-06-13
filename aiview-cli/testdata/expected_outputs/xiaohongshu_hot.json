@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "data": {
+    "timestamp": "2026-06-13T10:00:00Z",
+    "platform": "xiaohongshu",
+    "items": [
+      {
+        "id": 1,
+        "title": "测试小红书笔记标题 1",
+        "author": "小红书博主 1",
+        "likes": 5000,
+        "collects": 2000,
+        "comments": 300,
+        "shares": 150,
+        "url": "https://www.xiaohongshu.com/explore/1234567890"
+      },
+      {
+        "id": 2,
+        "title": "测试小红书笔记标题 2",
+        "author": "小红书博主 2",
+        "likes": 8000,
+        "collects": 3500,
+        "comments": 500,
+        "shares": 250,
+        "url": "https://www.xiaohongshu.com/explore/0987654321"
+      }
+    ]
+  },
+  "message": "success"
+}

@@ -3,12 +3,13 @@ package douyin
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewUserCmd creates the user command.
-func NewUserCmd(client Client) *cobra.Command {
+func NewUserCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	return &cobra.Command{
 		Use:   "user <uid>",
 		Short: "View Douyin user info",
@@ -20,6 +21,10 @@ Examples:
   aiview douyin user 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("douyin", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			result, err := client.GetUserInfo(args[0])

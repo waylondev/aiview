@@ -3,22 +3,29 @@ package xiaohongshu
 import (
 	"fmt"
 
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
 
 // NewHotCmd creates the hot notes command.
-func NewHotCmd(client Client) *cobra.Command {
+func NewHotCmd(client Client, isLoggedIn func() bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hot",
 		Short: "Show hot/trending notes",
 		Long: `Show the current hot/trending notes on Xiaohongshu.
+
+Requires login cookie for full access.
 
 Examples:
   aiview xiaohongshu hot
   aiview xiaohongshu hot --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.RequireAuth("xiaohongshu", isLoggedIn); err != nil {
+				return err
+			}
+
 			format := output.GetFormat(cmd)
 
 			result, err := client.GetHotNotes()
