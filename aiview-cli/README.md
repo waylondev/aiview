@@ -1,224 +1,148 @@
-# Aiview CLI — 多平台内容 CLI 工具
+# Aiview CLI — 多平台内容分析命令行工具
 
-A feature-rich command-line tool for Bilibili and Douyin (抖音), built in Go with Cobra. Supports video browsing, user queries, social interactions, and more.
+Aiview 是一个基于 Go 的多平台内容管理 CLI 工具，支持 **6 大内容平台**、**70+ 命令**、**4 种输出格式**，提供从数据采集到趋势分析的一站式终端体验。
 
-## Architecture
+## 核心特性
+
+- **6 平台覆盖** — Bilibili (42) / 抖音 (11) / 小红书 (5) / 微博 (4) / 快手 (4) / 知乎 (4)
+- **统一错误处理** — 标准化 `aiverr` 错误类型，HTML 响应检测，HTTP 状态码分类
+- **多格式输出** — JSON / YAML / Table / CSV，全局 `--json` / `--yaml` / `--csv` / `--table` 标志
+- **交互式 TUI** — 基于 [Bubbletea](https://github.com/charmbracelet/bubbletea) 的终端界面
+- **Web Dashboard** — 内置 HTTP 可视化面板，Chart.js 数据图表
+- **数据管道** — SQLite + JSON 双后端，支持采集 → 存储 → 分析 → 导出全流程
+- **速率控制** — 令牌桶限流 + TTL 缓存，保护 API 配额
+- **Go Library** — `pkg/aiview` 可作为 Go 模块在其他项目中引用
+
+## 快速开始
+
+```bash
+# 编译
+cd aiview-cli && go build -o aiview.exe .
+
+# 查看帮助
+./aiview --help
+
+# 查看平台热搜
+./aiview bilibili hot --json
+./aiview douyin hot --json
+./aiview weibo hot --json
+./aiview kuaishou hot --json
+./aiview zhihu hot --json
+
+# Cookie 登录（解锁更多功能）
+./aiview bilibili login --sessdata "<SESSDATA>" --bili-jct "<BILI_JCT>"
+./aiview douyin login --cookie "<cookie>"
+
+# 搜索
+./aiview bilibili search "AI" --json
+./aiview douyin search "AI" --json
+
+# 数据分析
+./aiview analyze trend --days 7 --platform bilibili
+./aiview compare --json
+
+# 启动 TUI
+./aiview tui
+
+# 启动 Dashboard
+./aiview dashboard
+```
+
+## 架构
 
 ```
 aiview-cli/
-├── main.go                          # 入口，调用 root.Execute()
-├── root.go                          # 根命令，注册平台命令 + 全局 flag
-├── commands/
-│   ├── bilibili/                    # Bilibili 子命令层
-│   │   ├── types.go                 #   Client 接口 | 类型定义
-│   │   ├── video.go, user.go, ...   #   各命令实现
-│   └── douyin/                      # Douyin 子命令层
-│       ├── types.go                 #   Client 接口 | 类型定义
-│       ├── hot.go, video.go, ...    #   各命令实现
+├── main.go / root.go          # 入口 & 全局 Flag
+├── commands/                  # 命令层（每个平台独立子包）
+│   ├── bilibili/              #   42 个命令
+│   ├── douyin/                #   11 个命令
+│   ├── xiaohongshu/           #   5 个命令
+│   ├── weibo/                 #   4 个命令
+│   ├── kuaishou/              #   4 个命令
+│   └── zhihu/                 #   4 个命令
 ├── internal/
-│   ├── platform/
-│   │   ├── platform.go              #   Platform 接口定义
-│   │   ├── registry.go              #   全局平台注册器
-│   │   ├── bilibili/
-│   │   │   ├── bilibili.go          #   BilibiliPlatform: Commands() + 委托
-│   │   │   ├── client.go            #   HTTP Client → Bilibili API
-│   │   │   ├── auth.go, login.go    #   认证 & 登录
-│   │   │   └── bilibilitypes/       #   共享类型 (VideoInfo, Credential...)
-│   │   └── douyin/
-│   │       ├── douyin.go            #   DouyinPlatform: Commands() + 委托
-│   │       ├── client.go            #   HTTP Client → Douyin API
-│   │       └── auth.go              #   Cookie 持久化
-│   ├── output/                      # JSON/YAML/Text 输出格式化
-│   └── config/                      # 配置加载 (viper)
-└── docs/                            # 文档
-    ├── TEST_REPORT_BILIBILI.md
-    └── TEST_REPORT_DOUYIN.md
+│   ├── platform/              # 平台抽象层 & 注册器
+│   │   ├── platform.go        #   Platform 接口定义
+│   │   ├── registry.go        #   全局平台注册
+│   │   ├── bilibili/          #   Bilibili 实现
+│   │   ├── douyin/            #   抖音实现
+│   │   ├── xiaohongshu/       #   小红书实现
+│   │   ├── weibo/             #   微博实现
+│   │   ├── kuaishou/          #   快手实现
+│   │   └── zhihu/             #   知乎实现
+│   ├── errors/                # 统一错误类型 (aiverr)
+│   ├── helper/                # 通用工具函数
+│   ├── config/                # 配置加载 (viper)
+│   ├── output/                # 输出格式化
+│   ├── storage/               # 数据持久化 (SQLite/JSON)
+│   ├── cache/                 # TTL 缓存
+│   ├── ratelimit/             # 令牌桶限流
+│   ├── analyzer/              # 趋势分析
+│   ├── pipeline/              # 数据管道
+│   ├── scheduler/             # 定时任务
+│   ├── auth/                  # 认证管理
+│   └── browser/               # 浏览器自动化 (chromedp)
+├── tui/                       # 交互式 TUI (bubbletea)
+├── dashboard/                 # Web Dashboard (Chart.js)
+├── pkg/aiview/                # Go Library API
+└── docs/                      # 测试报告
 ```
 
-### Layered Architecture
+### 请求流转
 
-```mermaid
-graph TD
-    A["main.go / root.go<br/>入口 & 全局 Flag"] --> B["commands/<br/>命令层"]
-    B --> C["internal/platform/<br/>平台抽象层"]
-    C --> D["internal/platform/bilibili<br/>Bilibili Client"]
-    C --> E["internal/platform/douyin<br/>Douyin Client"]
-    D --> F["Bilibili API<br/>(api.bilibili.com)"]
-    E --> G["Douyin API<br/>(www.douyin.com)"]
-    B --> H["internal/output<br/>输出格式化"]
-    H --> I["终端 (JSON / YAML / Text)"]
+```
+User → Cobra Parser → Platform Registry → Platform Commands
+  → HTTP Client (带限流+缓存) → API 响应
+  → 输出格式化 (JSON/YAML/Table/CSV) → Terminal
 ```
 
-### Request Flow
+## 平台命令概览
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant C as Cobra Parser
-    participant P as Platform Registry
-    participant CMD as Cobra Command
-    participant API as HTTP Client
-    participant F as Formatter
+| 平台 | 命令数 | 公开可用 | 需认证 | 测试报告 |
+|------|--------|----------|--------|----------|
+| Bilibili | 42 | 14 | 8 | [报告](docs/TEST_REPORT_BILIBILI.md) |
+| 抖音 | 11 | 2 | 9 | [报告](docs/TEST_REPORT_DOUYIN.md) |
+| 小红书 | 5 | 0 | 5 | [报告](docs/TEST_REPORT_XIAOHONGSHU.md) |
+| 微博 | 4 | 2 | 2 | [报告](docs/TEST_REPORT_WEIBO.md) |
+| 快手 | 4 | 3 | 1 | [报告](docs/TEST_REPORT_KUAISHOU.md) |
+| 知乎 | 4 | 2 | 2 | [报告](docs/TEST_REPORT_ZHIHU.md) |
+| 全局 | 6 | 6 | 0 | [报告](docs/TEST_REPORT_GLOBAL.md) |
 
-    U->>C: $ aiview bilibili video BVxxx --json
-    C->>P: 遍历 platform.All()
-    P->>CMD: p.Commands() → AddCommand
-    C->>CMD: RunE(cmd, args)
-    CMD->>API: client.GetVideoDetail("BVxxx")
-    API->>F: map[string]interface{} 结果
-    F->>U: JSON 格式化输出
-```
+## 全局命令
 
-## Quick Start
+| 命令 | 说明 |
+|------|------|
+| `analyze trend` | 趋势分析（支持 `--days` / `--platform` / `--type`） |
+| `compare` | 跨平台数据对比 |
+| `export` | 数据导出（支持 `--format` / `--output`） |
+| `schedule add/list/remove` | 定时任务管理 |
+| `tui` | 启动交互式终端界面 |
+| `dashboard` | 启动 Web 可视化面板 |
+
+## 技术栈
+
+| 组件 | 技术选型 |
+|------|----------|
+| CLI 框架 | [Cobra](https://github.com/spf13/cobra) |
+| 配置管理 | [Viper](https://github.com/spf13/viper) |
+| TUI 框架 | [Bubbletea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com/charmbracelet/lipgloss) |
+| 数据可视化 | [Chart.js](https://www.chartjs.org/) |
+| 浏览器自动化 | [chromedp](https://github.com/chromedp/chromedp) |
+| 数据库 | SQLite (CGO) + JSON 文件 |
+| CI/CD | GitHub Actions |
+
+## 构建
 
 ```bash
-# Login with cookie
-aiview bilibili login --sessdata "<SESSDATA>" --bili-jct "<BILI_JCT>"
-
-# Check status
-aiview bilibili status
-
-# Browse a video
-aiview bilibili video BV1GJ411x7Rq --json
-
-# View user info
-aiview bilibili user 37737161
+go build -o aiview.exe .
 ```
 
-## Commands
+**依赖**: Go 1.21+ / [ffmpeg](https://ffmpeg.org/)（仅 `audio --segment` 需要）
 
-### ✅ Account
-| Command | Description | Status |
-|---------|-------------|--------|
-| `login --sessdata` | Login with cookie | ✅ Done |
-| `login --qrcode` | QR code login | ✅ Done |
-| `logout` | Clear saved credentials | ✅ Done |
-| `status` | Check login status | ✅ Done |
-| `whoami` | Show current user info | ✅ Done |
-| `video-status <BV>` | View video statistics | ✅ Done |
-| `relation <UID>` | View relation status | ✅ Done |
+## 测试报告
 
-### ✅ User
-| Command | Description | Status |
-|---------|-------------|--------|
-| `user <UID>` | View user info | ✅ Done |
-| `user-videos <UID>` | View user's video list | ✅ Done |
-| `fans <UID>` | View fans list | ✅ Done |
-| `following <UID>` | View following list | ✅ Done |
+每个平台独立测试报告，覆盖全部命令验证：
 
-### ✅ Video
-| Command | Flags | Status |
-|---------|-------|--------|
-| `video <BV>` | `--subtitle, --ai, --comments, --related` | ✅ Done |
-| `tags <BV>` | — | ✅ Done |
-| `online <BV>` | — | ✅ Done |
-
-### ✅ Discovery
-| Command | Description | Status |
-|---------|-------------|--------|
-| `hot` | View trending videos | ✅ Done |
-| `rank` | View rankings | ✅ Done |
-| `feed` | View dynamic feed (login required) | ✅ Done |
-| `search <keyword>` | Search videos/users | ✅ Done |
-| `suggest <keyword>` | Get search suggestions | ✅ Done |
-| `recommend` | Get homepage recommendations | ✅ Done |
-| `region <rid>` | View videos by region | ✅ Done |
-| `trending` | View trending/hot search keywords | ✅ Done |
-| `precious` | View must-watch (入站必刷) curated videos | ✅ Done |
-| `weekly <number>` | View weekly hot video series | ✅ Done |
-
-### ✅ Collections & Storage
-| Command | Description | Status |
-|---------|-------------|--------|
-| `favorites <UID>` | View favorite folders | ✅ Done |
-| `favorite <BV>` | Add/remove video from favorites | ✅ Done |
-| `collection <UID>` | View user's video collections | ✅ Done |
-| `history` | View watch history | ✅ Done |
-| `watch-later` | View watch later list | ✅ Done |
-
-### ✅ Interactions
-| Command | Description | Status |
-|---------|-------------|--------|
-| `like <BV>` | Like/unlike a video | ✅ Done |
-| `coin <BV>` | Give coins to a video | ✅ Done |
-| `triple <BV>` | Like + Coin + Favorite | ✅ Done |
-| `unfollow <UID>` | Unfollow a user | ✅ Done |
-
-### ✅ Comments & Danmaku
-| Command | Description | Status |
-|---------|-------------|--------|
-| `comment <BV>` | View comments | ✅ Done |
-| `comment-delete <ID>` | Delete a comment | ✅ Done |
-| `danmaku <BV>` | View danmaku | ✅ Done |
-| `danmaku-send <BV>` | Send a danmaku | ✅ Done |
-
-### ✅ Dynamics
-| Command | Description | Status |
-|---------|-------------|--------|
-| `dynamic <UID>` | View user's dynamics | ❌ B站风控限流 |
-| `dynamic-post <text>` | Post a text dynamic | ✅ Done |
-| `dynamic-delete <id>` | Delete a dynamic | ✅ Done |
-
-### ✅ Audio & Live
-| Command | Description | Status |
-|---------|-------------|--------|
-| `audio <BV>` | Download audio and split into WAV (requires ffmpeg) | ✅ Done |
-| `live` | View live room info | ✅ Done |
-
-## Global Flags
-
-```bash
---json    Output in JSON format
---yaml    Output in YAML format
--v, --verbose  Enable verbose logging
-```
-
-## Limitations & Known Issues
-
-| Issue | Description | Workaround |
-|-------|-------------|------------|
-| `dynamic (user space)` | B站 rate limits user space dynamics API | Use `feed` for followed users' dynamics, or retry with delays |
-| `live` | Non-existent rooms return HTML error | Use a valid room ID |
-| `username encoding` | Chinese usernames may show garbled on Windows terminal | The JSON output contains correct Unicode data |
-
-## Build
-
-```bash
-cd aiview-cli
-go build -o aiview-cli.exe .
-```
-
-## Dependencies
-
-- [Cobra](https://github.com/spf13/cobra) — CLI framework
-- [ffmpeg](https://ffmpeg.org/) — Required for audio WAV splitting (`audio --segment`)
-- Go 1.21+
-
-## Douyin Platform
-
-Commands for Douyin (抖音) content discovery and video/user data.
-
-### Commands
-
-| Command | Usage | Status | Description |
-|---------|-------|--------|-------------|
-| `hot` | `douyin hot [--json\|--yaml]` | ✅ Done | View trending/hot search on Douyin |
-| `trending` | `douyin trending [--json\|--yaml]` | ✅ Done | View trending topics/challenges |
-| `search` | `douyin search <keyword> [--page N] [--count N]` | ⚠️ Partial | Search Douyin content (requires cookies for full results) |
-| `video` | `douyin video <video_id\|share_url>` | ⚠️ Cookie | View video details (requires login) |
-| `user` | `douyin user <uid>` | ⚠️ Cookie | View user profile info (requires login) |
-| `comment` | `douyin comment <video_id> [--cursor N]` | ⚠️ Cookie | View video comments (requires login) |
-| `user-posts` | `douyin user-posts <uid> [--cursor N]` | ⚠️ Cookie | View user's video posts (requires login) |
-| `login` | `douyin login --cookie <cookie>` | ✅ Done | Login with browser cookie |
-| `status` | `douyin status` | ✅ Done | Check login status |
-| `logout` | `douyin logout` | ✅ Done | Clear saved credentials |
-
-### Notes
-- `hot` and `trending` work without authentication
-- `video`, `user`, `comment`, `user-posts` require `douyin login --cookie <cookie>` first
-- `search` returns limited results without cookies
-
-## Test Reports
-
-- [Bilibili 平台测试报告](docs/TEST_REPORT_BILIBILI.md)
-- [Douyin 平台测试报告](docs/TEST_REPORT_DOUYIN.md)
+- [Bilibili](docs/TEST_REPORT_BILIBILI.md) · [抖音](docs/TEST_REPORT_DOUYIN.md) · [小红书](docs/TEST_REPORT_XIAOHONGSHU.md)
+- [微博](docs/TEST_REPORT_WEIBO.md) · [快手](docs/TEST_REPORT_KUAISHOU.md) · [知乎](docs/TEST_REPORT_ZHIHU.md)
+- [全局命令](docs/TEST_REPORT_GLOBAL.md)
