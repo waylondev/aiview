@@ -26,7 +26,7 @@ func NewSearchCmd(getClient func() Client) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 			keyword := args[0]
 
 			switch searchType {

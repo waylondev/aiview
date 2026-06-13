@@ -20,7 +20,7 @@ Examples:
   aiview douyin user 123456789`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			result, err := client.GetUserInfo(args[0])
 			if err != nil {

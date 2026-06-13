@@ -23,7 +23,7 @@ func NewDanmakuCmd(getClient func() Client) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			bvid, err := ExtractBVID(args[0])
 			if err != nil {
@@ -109,7 +109,7 @@ func NewDanmakuSendCmd(authStore AuthProvider, getClient func() Client) *cobra.C
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {

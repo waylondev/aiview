@@ -18,7 +18,7 @@ func NewFavoritesCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 		Long:  `View favorite folders (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
@@ -71,7 +71,7 @@ func NewFollowingCmd(authStore AuthProvider, getClient func() Client) *cobra.Com
 		Long:  `View following list (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
@@ -127,7 +127,7 @@ func NewHistoryCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 		Long:  `View watch history (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {
@@ -174,7 +174,7 @@ func NewWatchLaterCmd(authStore AuthProvider, getClient func() Client) *cobra.Co
 		Long:  `View watch later list (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {

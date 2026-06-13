@@ -45,7 +45,7 @@ Examples:
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			rid, err := strconv.Atoi(args[0])
 			if err != nil {

@@ -1,11 +1,6 @@
 // Package douyin provides CLI commands for the Douyin (抖音) platform.
 package douyin
 
-import (
-	"github.com/jackwener/aiview/internal/output"
-	"github.com/spf13/cobra"
-)
-
 // Client is the interface that the Douyin API client must satisfy for commands.
 type Client interface {
 	PlatformName() string
@@ -23,13 +18,3 @@ type Credential struct {
 	Cookie string `json:"cookie"`
 }
 
-// GetOutputFormat extracts the output format from cobra command flags.
-func GetOutputFormat(cmd *cobra.Command) output.Format {
-	parent := cmd
-	for parent.HasParent() {
-		parent = parent.Parent()
-	}
-	asJSON, _ := parent.Flags().GetBool("json")
-	asYAML, _ := parent.Flags().GetBool("yaml")
-	return output.ResolveFormat(asJSON, asYAML)
-}

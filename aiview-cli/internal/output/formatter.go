@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
@@ -147,4 +148,15 @@ func FormatDuration(seconds int) string {
 	m := seconds / 60
 	s := seconds % 60
 	return fmt.Sprintf("%02d:%02d", m, s)
+}
+
+// GetFormat extracts the output format from cobra command flags.
+func GetFormat(cmd *cobra.Command) Format {
+	parent := cmd
+	for parent.HasParent() {
+		parent = parent.Parent()
+	}
+	asJSON, _ := parent.Flags().GetBool("json")
+	asYAML, _ := parent.Flags().GetBool("yaml")
+	return ResolveFormat(asJSON, asYAML)
 }

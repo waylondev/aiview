@@ -26,7 +26,7 @@ Examples:
   aiview douyin search music --page 2 --count 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 			keyword := args[0]
 
 			result, err := client.Search(keyword, page, count)

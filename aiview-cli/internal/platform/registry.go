@@ -47,11 +47,11 @@ func All() []Platform {
 	return platforms
 }
 
-// MustGet returns a platform by name or panics.
-func MustGet(name string) Platform {
+// MustGet returns a platform by name. Returns an error instead of panicking.
+func MustGet(name string) (Platform, error) {
 	p, ok := GetPlatform(name)
 	if !ok {
-		panic(fmt.Sprintf("platform %q not registered", name))
+		return nil, fmt.Errorf("platform %q not registered", name)
 	}
-	return p
+	return p, nil
 }

@@ -5,8 +5,6 @@ import (
 	"regexp"
 
 	biliapi "github.com/jackwener/aiview/internal/platform/bilibili/bilibilitypes"
-	"github.com/jackwener/aiview/internal/output"
-	"github.com/spf13/cobra"
 )
 
 // Client is the interface that the bilibili API client must satisfy for commands.
@@ -150,13 +148,3 @@ func (e *BVIDError) Error() string {
 	return "Failed to extract BV ID: " + e.Input
 }
 
-// GetOutputFormat extracts the output format from cobra command flags.
-func GetOutputFormat(cmd *cobra.Command) output.Format {
-	parent := cmd
-	for parent.HasParent() {
-		parent = parent.Parent()
-	}
-	asJSON, _ := parent.Flags().GetBool("json")
-	asYAML, _ := parent.Flags().GetBool("yaml")
-	return output.ResolveFormat(asJSON, asYAML)
-}

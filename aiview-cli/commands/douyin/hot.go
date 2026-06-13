@@ -21,7 +21,7 @@ Examples:
   aiview douyin hot --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			result, err := client.GetHotSearch()
 			if err != nil {

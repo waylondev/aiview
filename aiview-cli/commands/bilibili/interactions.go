@@ -19,7 +19,7 @@ func NewLikeCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
@@ -67,7 +67,7 @@ func NewCoinCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
@@ -109,7 +109,7 @@ func NewTripleCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {
@@ -148,7 +148,7 @@ func NewUnfollowCmd(authStore AuthProvider, getClient func() Client) *cobra.Comm
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {

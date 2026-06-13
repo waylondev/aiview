@@ -22,7 +22,7 @@ Examples:
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			result, err := client.GetPreciousVideos()
 			if err != nil {

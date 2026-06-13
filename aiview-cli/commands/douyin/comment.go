@@ -25,7 +25,7 @@ Examples:
   aiview douyin comment 123456789 --cursor 20`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			result, err := client.GetVideoComments(args[0], cursor)
 			if err != nil {

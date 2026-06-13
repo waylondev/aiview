@@ -26,7 +26,7 @@ Examples:
   aiview bilibili live --uid 37737161`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			if roomID == 0 && uid == 0 {
 				output.EmitError("invalid_input", "Either --room or --uid is required", format)

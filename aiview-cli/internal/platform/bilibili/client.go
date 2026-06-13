@@ -45,15 +45,6 @@ func (c *Client) PlatformName() string {
 // BVIDRegex matches BV IDs.
 var BVIDRegex = regexp.MustCompile(`\bBV[0-9A-Za-z]{10}\b`)
 
-// ExtractBVID extracts a BV ID from a URL or returns the input if it's already a BV ID.
-func ExtractBVID(urlOrBvid string) (string, error) {
-	match := BVIDRegex.FindString(urlOrBvid)
-	if match != "" {
-		return match, nil
-	}
-	return "", fmt.Errorf("failed to extract BV ID: %s", urlOrBvid)
-}
-
 func (c *Client) buildHeaders() http.Header {
 	h := http.Header{}
 	h.Set("User-Agent", userAgent)

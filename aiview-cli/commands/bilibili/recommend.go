@@ -23,7 +23,7 @@ func NewRecommendCmd(getClient func() Client) *cobra.Command {
 		Long:  `View Bilibili recommended videos on the homepage.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 
 			data, err := client.GetRecommendVideos(fresh, page)
 			if err != nil {

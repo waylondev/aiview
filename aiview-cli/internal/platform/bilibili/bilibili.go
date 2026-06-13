@@ -1,3 +1,4 @@
+// Package bilibili provides the Bilibili platform implementation.
 package bilibili
 
 import (

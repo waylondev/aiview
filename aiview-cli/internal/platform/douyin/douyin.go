@@ -1,3 +1,4 @@
+// Package douyin provides the Douyin (抖音) platform implementation.
 package douyin
 
 import (

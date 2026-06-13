@@ -20,7 +20,7 @@ Examples:
   aiview douyin login --cookie "your_cookie_here"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := GetOutputFormat(cmd)
+			format := output.GetFormat(cmd)
 			if cookie == "" {
 				return fmt.Errorf("cookie is required, use --cookie flag")
 			}
