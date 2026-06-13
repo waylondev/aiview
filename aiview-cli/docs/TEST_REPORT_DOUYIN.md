@@ -37,16 +37,16 @@ $ aiview douyin hot --json
   "data": {
     "data": [
       {"hot_value": ..., "word": "火影手游7月版本前瞻", "position": 25, ...},
-      {"hot_value": 7682732, "word": "乘风五公选歌堪比抢票", "position": 38, ...},
+      {"hot_value": 7680387, "word": "这个榴莲馒头看起来很诱人", "position": 42, ...},
       ... (共 50 条)
-      {"hot_value": 7636722, "word": "浙江象山特色海鲜面夯得没边", "position": 50, ...}
+      {"hot_value": 7655134, "word": "石纪元登月篇千空成功登月", "position": 49, ...}
     ],
     "extra": {
-      "logid": "202606130817534C6C7796C72285B93BFE",
-      "now": 1781309874000,
-      "time_cost": {"stream_inner": 137}
+      "logid": "202606131039582004EADB45EF68BF671F",
+      "now": 1781318398000,
+      "time_cost": {"stream_inner": 179}
     },
-    "log_pb": {"impr_id": "202606130817534C6C7796C72285B93BFE"},
+    "log_pb": {"impr_id": "202606131039582004EADB45EF68BF671F"},
     "status_code": 0
   }
 }
@@ -54,7 +54,7 @@ $ aiview douyin hot --json
 
 **状态：** ✅ 通过
 
-**备注：** 成功返回 50 条热搜数据，包含 hot_value、word、position、label、word_cover 等字段。
+**备注：** 成功返回 50 条热搜数据，包含 hot_value、word、position、label、word_cover 等字段。耗时约 179ms。
 
 ---
 
@@ -74,19 +74,23 @@ $ aiview douyin trending --json
     "banner_dark": {"uri": "32e5200049fac86168117", "url_list": [...]},
     "banner_light": {"uri": "321f4000f703369c24604", "url_list": [...]},
     "data": {
-      "active_time": "2026-06-13 08:17:04",
+      "active_time": "2026-06-13 10:37:14",
+      "trending_desc": "实时上升热点",
       "trending_list": [],
       "word_list": [
-        {"word": "河南3岁男童走失已超40小时", "hot_value": 7674263, "position": 40, ...},
-        {"word": "世界杯精彩程度下降了吗", "hot_value": 7779975, "position": 20, ...},
+        {"word": "世界杯精彩程度下降了吗", "hot_value": 7717101, "position": 31, ...},
+        {"word": "这个榴莲馒头看起来很诱人", "hot_value": 7680387, "position": 42, ...},
+        {"word": "美加墨世界杯美国开幕式", "hot_value": 10454035, "position": 5, ...},
+        {"word": "河南3岁男童走失已超40小时", "hot_value": 7699158, "position": 37, ...},
         ...
       ]
     },
     "extra": {
-      "logid": "202606130817581638C2F44D7584B33A75",
-      "now": 1781309878000,
-      "time_cost": {"stream_inner": 190}
+      "logid": "202606131040121092E1A7F5931DAFBDCB",
+      "now": 1781318412000,
+      "time_cost": {"stream_inner": 226}
     },
+    "log_pb": {"impr_id": "202606131040121092E1A7F5931DAFBDCB"},
     "status_code": 0
   }
 }
@@ -94,7 +98,7 @@ $ aiview douyin trending --json
 
 **状态：** ✅ 通过
 
-**备注：** 成功返回热点榜数据，包含 word_list 列表、banner 图片和 active_time 时间戳。
+**备注：** 成功返回热点榜数据，包含 word_list 列表、banner 图片、share_info 分享信息和 active_time 时间戳。耗时约 226ms。
 
 ---
 
@@ -113,8 +117,28 @@ $ aiview douyin search test --json
   "data": {
     "cursor": 0,
     "data": [],
-    "has_more": 0,
+    "douyin_ai_search_info": {
+      "ai_search_req_patch": {},
+      "is_hit_high_risk": false,
+      "is_simple_qa_intent": false
+    },
+    "extra": {
+      "fatal_item_ids": [],
+      "logid": "202606131040409E82B7DEDE49C0BFC267",
+      "now": 1781318440000,
+      "scenes": null,
+      "search_request_id": ""
+    },
     "global_doodle_config": {"keyword": "test"},
+    "guide_search_words": null,
+    "has_more": 0,
+    "log_pb": {"impr_id": "202606131040409E82B7DEDE49C0BFC267"},
+    "maokai_extra": {},
+    "mock_recall_path": "/aweme/v1/web/general/search/single/",
+    "ops": null,
+    "path": "/aweme/v1/web/general/search/single/",
+    "polling_time": 3,
+    "qc": "",
     "search_nil_info": {
       "is_load_more": "first_flush",
       "search_nil_item": "invalid_app",
@@ -122,14 +146,14 @@ $ aiview douyin search test --json
       "text_type": 60
     },
     "status_code": 0,
-    "time_cost": {"stream_inner": 65}
+    "time_cost": {"stream_inner": 59}
   }
 }
 ```
 
 **状态：** ⚠️ 搜索无结果
 
-**备注：** 返回有效 JSON，但搜索结果为空数组。`search_nil_info.search_nil_type` 为 `"params_check"`，`search_nil_item` 为 `"invalid_app"`，表明 API 需要额外的客户端参数或 Cookie 认证才能返回搜索结果。
+**备注：** 返回有效 JSON，但搜索结果为空数组。`search_nil_info.search_nil_type` 为 `"params_check"`，`search_nil_item` 为 `"invalid_app"`，表明 API 需要额外的客户端参数或 Cookie 认证才能返回搜索结果。响应中新增了 `douyin_ai_search_info` 字段。
 
 ---
 
@@ -154,7 +178,7 @@ $ aiview douyin video 123456789 --json
       "icon": "",
       "notice": ""
     },
-    "log_pb": {"impr_id": "202606130818049748A5A035676EB43925"},
+    "log_pb": {"impr_id": "202606131040436C044F65B3E2E59EDC9D"},
     "status_code": 0
   }
 }
