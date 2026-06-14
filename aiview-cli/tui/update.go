@@ -57,7 +57,11 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case "down", "j":
-		if m.selected < len(m.items)-1 {
+		maxIdx := len(m.items) - 1
+		if m.state == StatePlatformSelect {
+			maxIdx = len(m.platforms) - 1
+		}
+		if m.selected < maxIdx {
 			m.selected++
 		}
 		return m, nil
@@ -155,6 +159,55 @@ func parseHotSearchData(data map[string]interface{}, platform string) []Item {
 					ID:    key,
 				})
 			}
+		}
+
+	case "weibo":
+		// Weibo returns data in "data" -> "realtime"
+		d := helper.GetMap(data, "data")
+		realtime := helper.GetSlice(d, "realtime")
+		for i, item := range realtime {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			items = append(items, Item{
+				Title:    helper.GetString(m, "word"),
+				HotValue: helper.GetInt(m, "num"),
+				ID:       fmt.Sprintf("%d", i+1),
+			})
+		}
+
+	case "kuaishou":
+		// Kuaishou returns data in "data" -> "visionHotRank" -> "items"
+		d := helper.GetMap(data, "data")
+		visionHotRank := helper.GetMap(d, "visionHotRank")
+		hotItems := helper.GetSlice(visionHotRank, "items")
+		for i, item := range hotItems {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			items = append(items, Item{
+				Title:    helper.GetString(m, "name"),
+				HotValue: helper.GetInt(m, "hotValue"),
+				ID:       fmt.Sprintf("%d", i+1),
+			})
+		}
+
+	case "zhihu":
+		// Zhihu returns data in "data" -> "top_search"
+		d := helper.GetMap(data, "data")
+		topSearch := helper.GetSlice(d, "top_search")
+		for i, item := range topSearch {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			items = append(items, Item{
+				Title:    helper.GetString(m, "query"),
+				HotValue: helper.GetInt(m, "hot_score"),
+				ID:       fmt.Sprintf("%d", i+1),
+			})
 		}
 	}
 

@@ -11,36 +11,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackwener/aiview/internal/cache"
 	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
-	"github.com/jackwener/aiview/internal/ratelimit"
+	"github.com/jackwener/aiview/internal/platform/base"
 )
 
 const (
-	baseURL    = "https://api.bilibili.com"
-	userAgent  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	baseURL   = "https://api.bilibili.com"
+	userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 )
 
 // Client is the Bilibili API client.
 type Client struct {
-	httpClient  *http.Client
-	credential  *Credential
-	cookies     string
-	limiter     *ratelimit.Limiter
-	cache       *cache.Cache
+	*base.Client
+	credential *Credential
 }
 
 // NewClient creates a new Bilibili API client.
 func NewClient(timeoutSec int, cookies string, credential *Credential) *Client {
 	return &Client{
-		httpClient: &http.Client{
-			Timeout: time.Duration(timeoutSec) * time.Second,
-		},
-		cookies:    cookies,
+		Client:     base.NewClient(timeoutSec, cookies, userAgent, baseURL, "https://www.bilibili.com", "bilibili"),
 		credential: credential,
-		limiter:    ratelimit.New(2, 5),
-		cache:      cache.New(5 * time.Minute),
 	}
 }
 
@@ -52,49 +43,43 @@ func (c *Client) PlatformName() string {
 // BVIDRegex matches BV IDs.
 var BVIDRegex = regexp.MustCompile(`\bBV[0-9A-Za-z]{10}\b`)
 
-func (c *Client) buildHeaders() http.Header {
-	h := http.Header{}
-	h.Set("User-Agent", userAgent)
+// BuildHeaders overrides the default to add bilibili-specific headers.
+func (c *Client) BuildHeaders() http.Header {
+	h := c.Client.BuildHeaders()
 	h.Set("Origin", "https://www.bilibili.com")
-	h.Set("Referer", "https://www.bilibili.com")
-	h.Set("Accept", "application/json, text/plain, */*")
-	h.Set("Accept-Language", "zh-CN,zh;q=0.9")
 	h.Set("sec-ch-ua", "\"Chromium\";v=\"133\", \"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\"")
 	h.Set("sec-ch-ua-mobile", "?0")
 	h.Set("sec-ch-ua-platform", "\"Windows\"")
-	if c.cookies != "" {
-		h.Set("Cookie", c.cookies)
-	}
 	return h
 }
 
 func (c *Client) buildRefererHeaders(referer string) http.Header {
-	h := c.buildHeaders()
+	h := c.BuildHeaders()
 	h.Set("Referer", referer)
 	return h
 }
 
 func (c *Client) get(path string, params url.Values) (map[string]interface{}, error) {
-	reqURL := baseURL + path
+	reqURL := c.BaseURL + path
 	if len(params) > 0 {
 		reqURL += "?" + params.Encode()
 	}
 
 	// Check cache first
-	if cached, ok := c.cache.Get(reqURL); ok {
+	if cached, ok := c.Cache.Get(reqURL); ok {
 		return cached.(map[string]interface{}), nil
 	}
 
 	// Rate limit
-	c.limiter.Wait()
+	c.Limiter.Wait()
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
-	req.Header = c.buildHeaders()
+	req.Header = c.BuildHeaders()
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
@@ -104,14 +89,14 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	if err != nil && isRiskControlError(err) {
 		// -352 风控绕过：添加 buvid3 cookie 重试一次
 		retryReq, _ := http.NewRequest("GET", reqURL, nil)
-		retryReq.Header = c.buildHeaders()
+		retryReq.Header = c.BuildHeaders()
 		existingCookie := retryReq.Header.Get("Cookie")
 		if existingCookie != "" {
 			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
 		} else {
 			retryReq.Header.Set("Cookie", "buvid3=placeholder")
 		}
-		retryResp, err := c.httpClient.Do(retryReq)
+		retryResp, err := c.HTTPClient.Do(retryReq)
 		if err != nil {
 			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
 		}
@@ -125,12 +110,12 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	}
 
 	// Store in cache
-	c.cache.Set(reqURL, result)
+	c.Cache.Set(reqURL, result)
 	return result, nil
 }
 
 func (c *Client) getWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
-	reqURL := baseURL + path
+	reqURL := c.BaseURL + path
 	if len(params) > 0 {
 		reqURL += "?" + params.Encode()
 	}
@@ -141,7 +126,7 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 	}
 	req.Header = c.buildRefererHeaders(referer)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
@@ -158,7 +143,7 @@ func (c *Client) getWithReferer(path string, params url.Values, referer string) 
 		} else {
 			retryReq.Header.Set("Cookie", "buvid3=placeholder")
 		}
-		retryResp, err := c.httpClient.Do(retryReq)
+		retryResp, err := c.HTTPClient.Do(retryReq)
 		if err != nil {
 			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
 		}
@@ -218,14 +203,14 @@ func (c *Client) post(path string, params url.Values) (map[string]interface{}, e
 	}
 
 	body := params.Encode()
-	req, err := http.NewRequest("POST", baseURL+path, strings.NewReader(body))
+	req, err := http.NewRequest("POST", c.BaseURL+path, strings.NewReader(body))
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
-	req.Header = c.buildHeaders()
+	req.Header = c.BuildHeaders()
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}
@@ -357,7 +342,7 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 	}
 	req.Header.Set("User-Agent", userAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -1007,9 +992,9 @@ func (c *Client) GetVideoDanmaku(cid int) ([]byte, error) {
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
-	req.Header = c.buildHeaders()
+	req.Header = c.BuildHeaders()
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
 	}

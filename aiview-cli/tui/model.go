@@ -6,7 +6,10 @@ import (
 	"github.com/jackwener/aiview/internal/platform"
 	_ "github.com/jackwener/aiview/internal/platform/bilibili"
 	_ "github.com/jackwener/aiview/internal/platform/douyin"
+	_ "github.com/jackwener/aiview/internal/platform/kuaishou"
+	_ "github.com/jackwener/aiview/internal/platform/weibo"
 	_ "github.com/jackwener/aiview/internal/platform/xiaohongshu"
+	_ "github.com/jackwener/aiview/internal/platform/zhihu"
 )
 
 // AppState represents the current state of the TUI
