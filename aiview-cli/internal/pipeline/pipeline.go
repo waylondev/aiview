@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/storage"
 )
 
@@ -44,7 +45,7 @@ func (p *Pipeline) CollectAndStore(types []string) error {
 		}
 
 		if err := p.storage.Save(record); err != nil {
-			return fmt.Errorf("save %s: %w", t, err)
+			return aiverr.Wrap(fmt.Errorf("save %s: %w", t, err), aiverr.CodeAPIError, "pipeline")
 		}
 
 		fmt.Printf("Collected and stored: %s/%s\n", p.platform, t)

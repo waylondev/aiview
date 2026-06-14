@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/pipeline"
@@ -64,7 +65,7 @@ Requires login cookie for full access.`,
 				store, err = storage.NewJSONFileStorage(storeDir)
 			default:
 				output.EmitError("invalid_store", fmt.Sprintf("Unknown store type: %s", storeType), format)
-				return fmt.Errorf("unknown store type: %s", storeType)
+				return aiverr.InvalidInput("douyin", fmt.Sprintf("unknown store type: %s", storeType))
 			}
 			if err != nil {
 				output.EmitError("storage_error", fmt.Sprintf("Failed to create storage: %v", err), format)

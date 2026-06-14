@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	aiverr "github.com/jackwener/aiview/internal/errors"
 )
 
 // JSONFileStorage stores records as JSON files.
@@ -32,7 +34,7 @@ func (s *JSONFileStorage) Save(record Record) error {
 
 	data, err := json.MarshalIndent(record, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal record: %w", err)
+		return aiverr.Wrap(fmt.Errorf("marshal record: %w", err), aiverr.CodeParseError, "storage")
 	}
 	return os.WriteFile(filename, data, 0644)
 }
@@ -43,7 +45,7 @@ func (s *JSONFileStorage) Query(platform, recordType string, limit int) ([]Recor
 
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
-		return nil, fmt.Errorf("read dir: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("read dir: %w", err), aiverr.CodeAPIError, "storage")
 	}
 
 	var records []Record
@@ -82,7 +84,7 @@ func (s *JSONFileStorage) QueryAll(limit int) ([]Record, error) {
 
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
-		return nil, fmt.Errorf("read dir: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("read dir: %w", err), aiverr.CodeAPIError, "storage")
 	}
 
 	var records []Record

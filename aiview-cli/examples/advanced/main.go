@@ -250,7 +250,7 @@ func exportToJSON(data interface{}, filename string) error {
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(data); err != nil {
-		return fmt.Errorf("编码 JSON 失败: %w", err)
+		return aiverr.APIError("export", fmt.Sprintf("编码 JSON 失败: %v", err))
 	}
 
 	return nil

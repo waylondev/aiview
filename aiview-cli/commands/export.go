@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/storage"
 	"github.com/spf13/cobra"
 )
@@ -68,7 +69,7 @@ func NewExportCmd() *cobra.Command {
 				}
 				w.Flush()
 			default:
-				return fmt.Errorf("unknown format: %s", format)
+				return aiverr.InvalidInput("export", fmt.Sprintf("unknown format: %s", format))
 			}
 
 			return nil

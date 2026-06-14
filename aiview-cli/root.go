@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackwener/aiview/commands"
 	"github.com/jackwener/aiview/dashboard"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/platform"
@@ -66,7 +67,7 @@ func Execute() error {
 
 			store, err := storage.NewSQLiteStorage(dbPath)
 			if err != nil {
-				return fmt.Errorf("failed to open storage: %w", err)
+				return aiverr.APIError("storage", fmt.Sprintf("failed to open storage: %v", err))
 			}
 			defer store.Close()
 

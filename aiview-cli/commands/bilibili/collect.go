@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/jackwener/aiview/internal/pipeline"
 	"github.com/jackwener/aiview/internal/storage"
@@ -83,7 +84,7 @@ func NewCollectCmd(getClient func() Client) *cobra.Command {
 				store, err = storage.NewJSONFileStorage(storeDir)
 			default:
 				output.EmitError("invalid_store", fmt.Sprintf("Unknown store type: %s", storeType), format)
-				return fmt.Errorf("unknown store type: %s", storeType)
+				return aiverr.InvalidInput("bilibili", fmt.Sprintf("unknown store type: %s", storeType))
 			}
 			if err != nil {
 				output.EmitError("storage_error", fmt.Sprintf("Failed to create storage: %v", err), format)

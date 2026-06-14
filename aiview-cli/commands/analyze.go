@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/spf13/cobra"
 	"github.com/jackwener/aiview/internal/analyzer"
 	"github.com/jackwener/aiview/internal/storage"
@@ -34,7 +35,7 @@ func newAnalyzeTrendCmd() *cobra.Command {
 			// Open storage
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
-				return fmt.Errorf("get home dir: %w", err)
+				return aiverr.APIError("analyze", fmt.Sprintf("get home dir: %v", err))
 			}
 
 			dbPath := filepath.Join(homeDir, ".aiview", "data.db")
@@ -43,7 +44,7 @@ func newAnalyzeTrendCmd() *cobra.Command {
 			if _, err := os.Stat(dbPath); err == nil {
 				store, err = storage.NewSQLiteStorage(dbPath)
 				if err != nil {
-					return fmt.Errorf("open sqlite: %w", err)
+					return aiverr.APIError("analyze", fmt.Sprintf("open sqlite: %v", err))
 				}
 			} else {
 				store, err = storage.NewJSONFileStorage(filepath.Join(homeDir, ".aiview", "data"))
@@ -57,7 +58,7 @@ func newAnalyzeTrendCmd() *cobra.Command {
 			a := analyzer.New(store)
 			result, err := a.AnalyzeTrend(platform, recordType, days)
 			if err != nil {
-				return fmt.Errorf("analyze trend: %w", err)
+				return aiverr.APIError("analyze", fmt.Sprintf("analyze trend: %v", err))
 			}
 
 			// Render chart

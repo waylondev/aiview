@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/chromedp/chromedp"
 )
 
@@ -24,7 +25,7 @@ func GetCookies(url string, timeout time.Duration) (string, error) {
 		chromedp.Evaluate(`document.cookie`, &cookies),
 	)
 	if err != nil {
-		return "", fmt.Errorf("browser automation failed: %w", err)
+		return "", aiverr.NetworkError("browser", fmt.Sprintf("browser automation failed: %v", err))
 	}
 
 	return cookies, nil

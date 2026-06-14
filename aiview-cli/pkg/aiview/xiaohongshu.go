@@ -75,7 +75,7 @@ func (x *XiaohongshuClient) GetNoteDetail(noteID string) (*VideoInfo, error) {
 	dataMap := helper.GetMap(data, "data")
 	items := helper.GetSlice(dataMap, "items")
 	if len(items) == 0 {
-		return nil, fmt.Errorf("note not found")
+		return nil, aiverr.NotFound("xiaohongshu", "note not found")
 	}
 
 	item := items[0].(map[string]interface{})

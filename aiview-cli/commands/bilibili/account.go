@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/browser"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
@@ -14,10 +15,10 @@ import (
 // QR login helpers — injected by the platform package via SetQRLoginFuncs.
 var (
 	qrGenerate = func() (*QRLoginSession, error) {
-		return nil, fmt.Errorf("qr login not implemented")
+		return nil, aiverr.APIError("bilibili", "qr login not implemented")
 	}
 	qrPoll = func(key string) (int, *Credential, error) {
-		return 0, nil, fmt.Errorf("qr login not implemented")
+		return 0, nil, aiverr.APIError("bilibili", "qr login not implemented")
 	}
 )
 

@@ -73,7 +73,7 @@ func (d *DouyinClient) GetVideoDetail(videoID string) (*VideoInfo, error) {
 
 	aweme := helper.GetMap(data, "aweme_detail")
 	if aweme == nil {
-		return nil, fmt.Errorf("video not found")
+		return nil, aiverr.NotFound("douyin", "video not found")
 	}
 
 	author := helper.GetMap(aweme, "author")

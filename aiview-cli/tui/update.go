@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
 )
 
@@ -33,7 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 		} else if msg.msg != "" {
-			m.err = fmt.Errorf("%s", msg.msg)
+			m.err = aiverr.APIError("tui", msg.msg)
 		}
 		return m, nil
 	}

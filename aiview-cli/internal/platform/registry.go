@@ -3,6 +3,8 @@ package platform
 import (
 	"fmt"
 	"sync"
+
+	aiverr "github.com/jackwener/aiview/internal/errors"
 )
 
 var (
@@ -51,7 +53,7 @@ func All() []Platform {
 func MustGet(name string) (Platform, error) {
 	p, ok := GetPlatform(name)
 	if !ok {
-		return nil, fmt.Errorf("platform %q not registered", name)
+		return nil, aiverr.NotFound("platform", fmt.Sprintf("platform %q not registered", name))
 	}
 	return p, nil
 }

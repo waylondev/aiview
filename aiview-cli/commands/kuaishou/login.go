@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/browser"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
@@ -46,7 +47,7 @@ Examples:
 			}
 
 			if cookie == "" {
-				return fmt.Errorf("cookie is required, use --cookie flag or --auto")
+				return aiverr.NotAuthenticated("kuaishou", "cookie is required, use --cookie flag or --auto")
 			}
 			if err := saveCookie(cookie); err != nil {
 				output.EmitError("internal_error", fmt.Sprintf("failed to save credential: %v", err), format)

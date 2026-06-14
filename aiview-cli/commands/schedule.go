@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/scheduler"
 	"github.com/spf13/cobra"
 )
@@ -112,7 +113,7 @@ func newScheduleRemoveCmd() *cobra.Command {
 			s := scheduler.New()
 
 			if err := s.RemoveJob(id); err != nil {
-				return fmt.Errorf("remove job: %w", err)
+				return aiverr.APIError("schedule", fmt.Sprintf("remove job: %v", err))
 			}
 
 			fmt.Printf("✓ Scheduled task removed: %s\n", id)

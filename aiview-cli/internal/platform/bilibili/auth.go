@@ -1,9 +1,8 @@
 package bilibili
 
 import (
-	"fmt"
-
 	"github.com/jackwener/aiview/internal/auth"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 )
 
 // AuthStore wraps the generic auth store for bilibili.
@@ -64,7 +63,7 @@ func (a *AuthStore) GetCredential() (*Credential, error) {
 		return nil, nil
 	}
 	if cred.IsStale(7) {
-		return cred, fmt.Errorf("Credential expired, please log in again")
+		return cred, aiverr.NotAuthenticated("bilibili", "Credential expired, please log in again")
 	}
 	return cred, nil
 }

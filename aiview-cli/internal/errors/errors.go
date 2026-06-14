@@ -14,6 +14,7 @@ const (
 	CodeParseError       = "parse_error"
 	CodeNotFound         = "not_found"
 	CodeForbidden        = "forbidden"
+	CodeInvalidInput     = "invalid_input"
 )
 
 // PlatformError represents a structured error with platform context.
@@ -126,6 +127,11 @@ func ParseError(platform, message string) *PlatformError {
 // Forbidden creates a forbidden error.
 func Forbidden(platform, message string) *PlatformError {
 	return New(CodeForbidden, message).WithPlatform(platform)
+}
+
+// InvalidInput creates an invalid_input error.
+func InvalidInput(platform, message string) *PlatformError {
+	return New(CodeInvalidInput, message).WithPlatform(platform)
 }
 
 // IsPlatformError checks if an error is a PlatformError.

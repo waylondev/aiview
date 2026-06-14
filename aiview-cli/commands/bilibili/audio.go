@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -176,7 +177,7 @@ func downloadAudio(url, outputPath string) (int64, error) {
 
 	f, err := os.Create(outputPath)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create file: %w", err)
+		return 0, aiverr.APIError("bilibili", fmt.Sprintf("failed to create file: %v", err))
 	}
 	defer f.Close()
 

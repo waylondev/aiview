@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	_ "modernc.org/sqlite"
 )
 
@@ -17,7 +18,7 @@ type SQLiteStorage struct {
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("open database: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("open database: %w", err), aiverr.CodeAPIError, "storage")
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS records (
@@ -28,7 +29,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		collected_at DATETIME NOT NULL
 	)`)
 	if err != nil {
-		return nil, fmt.Errorf("create table: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("create table: %w", err), aiverr.CodeAPIError, "storage")
 	}
 
 	return &SQLiteStorage{db: db}, nil
@@ -37,7 +38,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 func (s *SQLiteStorage) Save(record Record) error {
 	data, err := json.Marshal(record.Data)
 	if err != nil {
-		return fmt.Errorf("marshal data: %w", err)
+		return aiverr.Wrap(fmt.Errorf("marshal data: %w", err), aiverr.CodeParseError, "storage")
 	}
 
 	_, err = s.db.Exec(
@@ -57,7 +58,7 @@ func (s *SQLiteStorage) Query(platform, recordType string, limit int) ([]Record,
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("query records: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("query records: %w", err), aiverr.CodeAPIError, "storage")
 	}
 	defer rows.Close()
 
@@ -85,7 +86,7 @@ func (s *SQLiteStorage) QueryAll(limit int) ([]Record, error) {
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("query records: %w", err)
+		return nil, aiverr.Wrap(fmt.Errorf("query records: %w", err), aiverr.CodeAPIError, "storage")
 	}
 	defer rows.Close()
 

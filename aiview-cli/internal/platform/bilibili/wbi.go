@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
 )
 
@@ -70,7 +71,7 @@ func getWBIKey() (*WBIKey, error) {
 	subKey := extractKeyFromURL(subURL)
 
 	if imgKey == "" || subKey == "" {
-		return nil, fmt.Errorf("failed to extract WBI keys")
+		return nil, aiverr.APIError("bilibili", "failed to extract WBI keys")
 	}
 
 	mixKey := mixWBIKeys(imgKey, subKey)

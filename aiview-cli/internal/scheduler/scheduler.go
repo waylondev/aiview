@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+
+	aiverr "github.com/jackwener/aiview/internal/errors"
 )
 
 // Job represents a scheduled task.
@@ -40,7 +42,7 @@ func (s *Scheduler) AddJob(id string, interval time.Duration, command string) er
 	defer s.mu.Unlock()
 
 	if _, exists := s.jobs[id]; exists {
-		return fmt.Errorf("job %q already exists", id)
+		return aiverr.InvalidInput("scheduler", fmt.Sprintf("job %q already exists", id))
 	}
 
 	now := time.Now()
@@ -60,7 +62,7 @@ func (s *Scheduler) RemoveJob(id string) error {
 	defer s.mu.Unlock()
 
 	if _, exists := s.jobs[id]; !exists {
-		return fmt.Errorf("job %q not found", id)
+		return aiverr.NotFound("scheduler", fmt.Sprintf("job %q not found", id))
 	}
 
 	delete(s.jobs, id)

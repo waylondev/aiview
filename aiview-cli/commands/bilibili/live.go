@@ -3,6 +3,7 @@ package bilibili
 import (
 	"fmt"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
 
 	"github.com/jackwener/aiview/internal/output"
@@ -30,7 +31,7 @@ Examples:
 
 			if roomID == 0 && uid == 0 {
 				output.EmitError("invalid_input", "Either --room or --uid is required", format)
-				return fmt.Errorf("either --room or --uid is required")
+				return aiverr.InvalidInput("bilibili", "either --room or --uid is required")
 			}
 
 			if roomID == 0 {

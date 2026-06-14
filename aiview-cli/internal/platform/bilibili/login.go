@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
 )
 
@@ -31,7 +32,7 @@ type QRLoginSession struct {
 func GenerateQRCode() (*QRLoginSession, error) {
 	req, err := http.NewRequest("GET", "https://passport.bilibili.com/x/passport-login/web/qrcode/generate", nil)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create QR code request: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to create QR code request: %v", err))
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
@@ -55,7 +56,7 @@ func GenerateQRCode() (*QRLoginSession, error) {
 
 	code := helper.GetInt(result, "code")
 	if code != 0 {
-		return nil, fmt.Errorf("Failed to generate QR code [%d]: %s", code, helper.GetString(result, "message"))
+		return nil, aiverr.APIError("bilibili", fmt.Sprintf("Failed to generate QR code [%d]: %s", code, helper.GetString(result, "message")))
 	}
 
 	data := helper.GetMap(result, "data")
@@ -83,12 +84,12 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("Failed to read poll response: %w", err)
+		return QRLoginPending, nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to read poll response: %v", err))
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return QRLoginPending, nil, fmt.Errorf("Failed to parse poll response: %w", err)
+		return QRLoginPending, nil, aiverr.ParseError("bilibili", fmt.Sprintf("Failed to parse poll response: %v", err))
 	}
 
 	data := helper.GetMap(result, "data")
@@ -107,7 +108,7 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 		return QRLoginPending, nil, nil
 	default:
 		msg := helper.GetString(data, "message")
-		return QRLoginPending, nil, fmt.Errorf("QR code login error [%d]: %s", code, msg)
+		return QRLoginPending, nil, aiverr.APIError("bilibili", fmt.Sprintf("QR code login error [%d]: %s", code, msg))
 	}
 }
 

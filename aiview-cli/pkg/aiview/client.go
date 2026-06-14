@@ -3,6 +3,7 @@ package aiview
 import (
 	"fmt"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
 	_ "github.com/jackwener/aiview/internal/platform/bilibili"
@@ -72,7 +73,7 @@ func (c *Client) DouyinClient() (*DouyinClient, error) {
 // Returns error if the platform is not xiaohongshu.
 func (c *Client) XiaohongshuClient() (*XiaohongshuClient, error) {
 	if c.platform.Name() != "xiaohongshu" {
-		return nil, fmt.Errorf("not a xiaohongshu client")
+		return nil, aiverr.InvalidInput("client", "not a xiaohongshu client")
 	}
 
 	client, err := c.platform.NewClient(c.config)
@@ -102,7 +103,7 @@ func (c *Client) WeiboClient() (*WeiboClient, error) {
 // Returns error if the platform is not kuaishou.
 func (c *Client) KuaishouClient() (*KuaishouClient, error) {
 	if c.platform.Name() != "kuaishou" {
-		return nil, fmt.Errorf("not a kuaishou client")
+		return nil, aiverr.InvalidInput("client", "not a kuaishou client")
 	}
 
 	client, err := c.platform.NewClient(c.config)

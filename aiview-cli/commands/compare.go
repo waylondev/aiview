@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/spf13/cobra"
 	"github.com/jackwener/aiview/internal/analyzer"
 	"github.com/jackwener/aiview/internal/storage"
@@ -23,7 +24,7 @@ func NewCompareCmd() *cobra.Command {
 			// Open storage
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
-				return fmt.Errorf("get home dir: %w", err)
+				return aiverr.APIError("compare", fmt.Sprintf("get home dir: %v", err))
 			}
 
 			dbPath := filepath.Join(homeDir, ".aiview", "data.db")
@@ -49,7 +50,7 @@ func NewCompareCmd() *cobra.Command {
 			a := analyzer.New(store)
 			results, err := a.ComparePlatforms(keyword, platformList)
 			if err != nil {
-				return fmt.Errorf("compare platforms: %w", err)
+				return aiverr.APIError("compare", fmt.Sprintf("compare platforms: %v", err))
 			}
 
 			// Render table

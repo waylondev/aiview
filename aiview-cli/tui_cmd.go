@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/tui"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ Examples:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p := tea.NewProgram(tui.InitialModel(), tea.WithAltScreen())
 			if _, err := p.Run(); err != nil {
-				return fmt.Errorf("TUI error: %w", err)
+				return aiverr.APIError("tui", fmt.Sprintf("TUI error: %v", err))
 			}
 			return nil
 		},

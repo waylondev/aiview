@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/jackwener/aiview/internal/errors"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -246,7 +246,7 @@ func RenderTable(data interface{}) error {
 func RenderCSV(data interface{}) error {
 	v := reflect.ValueOf(data)
 	if v.Kind() != reflect.Slice {
-		return fmt.Errorf("RenderCSV: expected slice, got %T", data)
+		return aiverr.InvalidInput("output", fmt.Sprintf("RenderCSV: expected slice, got %T", data))
 	}
 	if v.Len() == 0 {
 		return nil

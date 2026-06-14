@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/output"
 	"github.com/spf13/cobra"
@@ -23,7 +24,7 @@ func extractVideoID(input string) (string, error) {
 		return matches[1], nil
 	}
 
-	return "", fmt.Errorf("unable to extract video ID from '%s'. Expected a plain video ID or a URL like https://www.douyin.com/video/123456789", input)
+	return "", aiverr.InvalidInput("douyin", fmt.Sprintf("unable to extract video ID from '%s'. Expected a plain video ID or a URL like https://www.douyin.com/video/123456789", input))
 }
 
 // NewVideoCmd creates the video command.
