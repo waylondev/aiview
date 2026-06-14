@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackwener/aiview/internal/cache"
+	"github.com/jackwener/aiview/internal/platform/base"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
@@ -34,11 +35,13 @@ func TestClient_GetHotSearch(t *testing.T) {
 
 	// Create client with custom transport that rewrites URL to test server
 	client := &Client{
-		httpClient: &http.Client{
-			Transport: &testTransport{serverURL: server.URL},
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
 		},
-		limiter: ratelimit.New(100, 10),
-		cache:   cache.New(5 * time.Minute),
 	}
 
 	result, err := client.GetHotSearch(10)
@@ -82,11 +85,13 @@ func TestClient_GetVideoInfo(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		httpClient: &http.Client{
-			Transport: &testTransport{serverURL: server.URL},
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
 		},
-		limiter: ratelimit.New(100, 10),
-		cache:   cache.New(5 * time.Minute),
 	}
 
 	info, err := client.GetVideoInfo("BV1xx411c7m9")
@@ -109,11 +114,13 @@ func TestClient_HTTPError(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		httpClient: &http.Client{
-			Transport: &testTransport{serverURL: server.URL},
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
 		},
-		limiter: ratelimit.New(100, 10),
-		cache:   cache.New(5 * time.Minute),
 	}
 
 	_, err := client.GetHotSearch(10)

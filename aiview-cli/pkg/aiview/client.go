@@ -7,7 +7,10 @@ import (
 	"github.com/jackwener/aiview/internal/platform"
 	_ "github.com/jackwener/aiview/internal/platform/bilibili"
 	_ "github.com/jackwener/aiview/internal/platform/douyin"
+	_ "github.com/jackwener/aiview/internal/platform/kuaishou"
+	_ "github.com/jackwener/aiview/internal/platform/weibo"
 	_ "github.com/jackwener/aiview/internal/platform/xiaohongshu"
+	_ "github.com/jackwener/aiview/internal/platform/zhihu"
 )
 
 // Client provides a unified interface for accessing multiple platforms.
@@ -78,4 +81,49 @@ func (c *Client) XiaohongshuClient() (*XiaohongshuClient, error) {
 	}
 
 	return &XiaohongshuClient{client: client}, nil
+}
+
+// WeiboClient returns the underlying Weibo client.
+// Returns error if the platform is not weibo.
+func (c *Client) WeiboClient() (*WeiboClient, error) {
+	if c.platform.Name() != "weibo" {
+		return nil, fmt.Errorf("not a weibo client")
+	}
+
+	client, err := c.platform.NewClient(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &WeiboClient{client: client}, nil
+}
+
+// KuaishouClient returns the underlying Kuaishou client.
+// Returns error if the platform is not kuaishou.
+func (c *Client) KuaishouClient() (*KuaishouClient, error) {
+	if c.platform.Name() != "kuaishou" {
+		return nil, fmt.Errorf("not a kuaishou client")
+	}
+
+	client, err := c.platform.NewClient(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &KuaishouClient{client: client}, nil
+}
+
+// ZhihuClient returns the underlying Zhihu client.
+// Returns error if the platform is not zhihu.
+func (c *Client) ZhihuClient() (*ZhihuClient, error) {
+	if c.platform.Name() != "zhihu" {
+		return nil, fmt.Errorf("not a zhihu client")
+	}
+
+	client, err := c.platform.NewClient(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ZhihuClient{client: client}, nil
 }
