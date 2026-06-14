@@ -19,7 +19,7 @@ type JSONFileStorage struct {
 
 func NewJSONFileStorage(dir string) (*JSONFileStorage, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("create storage dir: %w", err)
+		return nil, aiverr.APIError("storage", fmt.Sprintf("create storage dir: %v", err))
 	}
 	return &JSONFileStorage{dir: dir}, nil
 }
@@ -34,7 +34,7 @@ func (s *JSONFileStorage) Save(record Record) error {
 
 	data, err := json.MarshalIndent(record, "", "  ")
 	if err != nil {
-		return aiverr.Wrap(fmt.Errorf("marshal record: %w", err), aiverr.CodeParseError, "storage")
+		return aiverr.ParseError("storage", fmt.Sprintf("marshal record: %v", err))
 	}
 	return os.WriteFile(filename, data, 0644)
 }
@@ -45,7 +45,7 @@ func (s *JSONFileStorage) Query(platform, recordType string, limit int) ([]Recor
 
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("read dir: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("read dir: %v", err))
 	}
 
 	var records []Record
@@ -84,7 +84,7 @@ func (s *JSONFileStorage) QueryAll(limit int) ([]Record, error) {
 
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("read dir: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("read dir: %v", err))
 	}
 
 	var records []Record

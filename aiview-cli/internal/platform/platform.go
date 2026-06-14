@@ -21,3 +21,18 @@ type Platform interface {
 	// NewClient creates a new API client for this platform.
 	NewClient(cfg *config.Config) (Client, error)
 }
+
+// HotSearchable is the interface for platforms that support hot search/trending.
+type HotSearchable interface {
+	GetHotSearch(count ...int) (map[string]interface{}, error)
+}
+
+// Searchable is the interface for platforms that support content search.
+type Searchable interface {
+	Search(query string, count ...int) (map[string]interface{}, error)
+}
+
+// UserQueryable is the interface for platforms that support user info queries.
+type UserQueryable interface {
+	GetUserInfo(uid string) (map[string]interface{}, error)
+}

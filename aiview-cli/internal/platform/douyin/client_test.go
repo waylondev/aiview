@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackwener/aiview/internal/cache"
+	"github.com/jackwener/aiview/internal/platform/base"
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
@@ -31,11 +32,14 @@ func TestClient_GetHotSearch(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		httpClient: &http.Client{
-			Transport: &testTransport{serverURL: server.URL},
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
+			BaseURL: server.URL,
 		},
-		limiter: ratelimit.New(100, 10),
-		cache:   cache.New(5 * time.Minute),
 	}
 
 	result, err := client.GetHotSearch()
@@ -55,11 +59,14 @@ func TestClient_HTTPError(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		httpClient: &http.Client{
-			Transport: &testTransport{serverURL: server.URL},
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
+			BaseURL: server.URL,
 		},
-		limiter: ratelimit.New(100, 10),
-		cache:   cache.New(5 * time.Minute),
 	}
 
 	_, err := client.GetHotSearch()

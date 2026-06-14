@@ -39,7 +39,7 @@ var rootCmd = &cobra.Command{
 		var err error
 		cfg, err = config.LoadConfig()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return aiverr.APIError("config", fmt.Sprintf("failed to load config: %v", err))
 		}
 		return nil
 	},

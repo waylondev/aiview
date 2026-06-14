@@ -49,7 +49,7 @@ func newAnalyzeTrendCmd() *cobra.Command {
 			} else {
 				store, err = storage.NewJSONFileStorage(filepath.Join(homeDir, ".aiview", "data"))
 				if err != nil {
-					return fmt.Errorf("open json storage: %w", err)
+					return aiverr.APIError("analyze", fmt.Sprintf("open json storage: %v", err))
 				}
 			}
 			defer store.Close()

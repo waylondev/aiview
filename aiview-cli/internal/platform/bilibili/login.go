@@ -40,18 +40,18 @@ func GenerateQRCode() (*QRLoginSession, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Network error while generating QR code: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Network error while generating QR code: %v", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read QR code response: %w", err)
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to read QR code response: %v", err))
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("Failed to parse QR code response: %w", err)
+		return nil, aiverr.ParseError("bilibili", fmt.Sprintf("Failed to parse QR code response: %v", err))
 	}
 
 	code := helper.GetInt(result, "code")
@@ -70,7 +70,7 @@ func GenerateQRCode() (*QRLoginSession, error) {
 func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 	req, err := http.NewRequest("GET", "https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key="+qrcodeKey, nil)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("Failed to poll QR code status: %w", err)
+		return QRLoginPending, nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to poll QR code status: %v", err))
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
@@ -78,7 +78,7 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return QRLoginPending, nil, fmt.Errorf("Network error while polling QR code: %w", err)
+		return QRLoginPending, nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Network error while polling QR code: %v", err))
 	}
 	defer resp.Body.Close()
 

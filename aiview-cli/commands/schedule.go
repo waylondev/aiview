@@ -35,7 +35,7 @@ func newScheduleAddCmd() *cobra.Command {
 			// Parse interval
 			dur, err := scheduler.ParseInterval(interval)
 			if err != nil {
-				return fmt.Errorf("invalid interval: %w", err)
+				return aiverr.InvalidInput("schedule", fmt.Sprintf("invalid interval: %v", err))
 			}
 
 			// Create scheduler (in-memory for now)
@@ -48,7 +48,7 @@ func newScheduleAddCmd() *cobra.Command {
 
 			// Add job
 			if err := s.AddJob(id, dur, command); err != nil {
-				return fmt.Errorf("add job: %w", err)
+				return aiverr.APIError("schedule", fmt.Sprintf("add job: %v", err))
 			}
 
 			fmt.Printf("✓ Scheduled task added: %s (every %s)\n", id, interval)

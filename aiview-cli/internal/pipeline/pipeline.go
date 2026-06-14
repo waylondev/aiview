@@ -34,7 +34,7 @@ func (p *Pipeline) CollectAndStore(types []string) error {
 	for _, t := range types {
 		data, err := p.collector.Collect(t)
 		if err != nil {
-			return fmt.Errorf("collect %s: %w", t, err)
+			return aiverr.Wrap(err, aiverr.CodeAPIError, p.platform)
 		}
 
 		record := storage.Record{

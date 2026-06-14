@@ -51,4 +51,44 @@ const (
 	PlatformBilibili    Platform = "bilibili"
 	PlatformDouyin      Platform = "douyin"
 	PlatformXiaohongshu Platform = "xiaohongshu"
+	PlatformWeibo       Platform = "weibo"
+	PlatformKuaishou    Platform = "kuaishou"
+	PlatformZhihu       Platform = "zhihu"
 )
+
+// SupportedPlatforms returns all supported platforms.
+func SupportedPlatforms() []Platform {
+	return []Platform{
+		PlatformBilibili,
+		PlatformDouyin,
+		PlatformXiaohongshu,
+		PlatformWeibo,
+		PlatformKuaishou,
+		PlatformZhihu,
+	}
+}
+
+// HotSearchable defines the interface for platforms that support hot search.
+type HotSearchable interface {
+	GetHotSearch() ([]HotItem, error)
+}
+
+// Searchable defines the interface for platforms that support search.
+type Searchable interface {
+	Search(keyword string, page int) ([]SearchItem, error)
+}
+
+// UserQueryable defines the interface for platforms that support user queries.
+type UserQueryable interface {
+	GetUserInfo(uid string) (*UserInfo, error)
+}
+
+// VideoQueryable defines the interface for platforms that support video queries (Bilibili, Douyin).
+type VideoQueryable interface {
+	GetVideoInfo(videoID string) (*VideoInfo, error)
+}
+
+// NoteQueryable defines the interface for platforms that support note queries (Xiaohongshu).
+type NoteQueryable interface {
+	GetNoteDetail(noteID string) (*VideoInfo, error)
+}

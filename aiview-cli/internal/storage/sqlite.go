@@ -18,7 +18,7 @@ type SQLiteStorage struct {
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("open database: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("open database: %v", err))
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS records (
@@ -29,7 +29,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		collected_at DATETIME NOT NULL
 	)`)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("create table: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("create table: %v", err))
 	}
 
 	return &SQLiteStorage{db: db}, nil
@@ -38,7 +38,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 func (s *SQLiteStorage) Save(record Record) error {
 	data, err := json.Marshal(record.Data)
 	if err != nil {
-		return aiverr.Wrap(fmt.Errorf("marshal data: %w", err), aiverr.CodeParseError, "storage")
+		return aiverr.ParseError("storage", fmt.Sprintf("marshal data: %v", err))
 	}
 
 	_, err = s.db.Exec(
@@ -58,7 +58,7 @@ func (s *SQLiteStorage) Query(platform, recordType string, limit int) ([]Record,
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("query records: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("query records: %v", err))
 	}
 	defer rows.Close()
 
@@ -86,7 +86,7 @@ func (s *SQLiteStorage) QueryAll(limit int) ([]Record, error) {
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("query records: %w", err), aiverr.CodeAPIError, "storage")
+		return nil, aiverr.APIError("storage", fmt.Sprintf("query records: %v", err))
 	}
 	defer rows.Close()
 

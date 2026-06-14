@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jackwener/aiview/internal/helper"
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/platform"
 	"github.com/jackwener/aiview/internal/platform/xiaohongshu"
 )

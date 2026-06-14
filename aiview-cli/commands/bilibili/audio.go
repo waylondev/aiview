@@ -164,14 +164,14 @@ func NewAudioCmd(getClient func() Client) *cobra.Command {
 func downloadAudio(url, outputPath string) (int64, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
+		return 0, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 	req.Header.Set("Referer", "https://www.bilibili.com")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("download failed: %w", err)
+		return 0, aiverr.NetworkError("bilibili", fmt.Sprintf("download failed: %v", err))
 	}
 	defer resp.Body.Close()
 

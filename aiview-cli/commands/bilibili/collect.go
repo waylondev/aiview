@@ -40,7 +40,7 @@ func (bc *bilibiliCollector) Collect(recordType string) (map[string]interface{},
 		}
 		return searchResultsToMap(results), nil
 	default:
-		return nil, fmt.Errorf("unknown type: %s", recordType)
+		return nil, aiverr.InvalidInput("bilibili", fmt.Sprintf("unknown type: %s", recordType))
 	}
 }
 

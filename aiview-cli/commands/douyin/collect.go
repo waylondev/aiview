@@ -28,7 +28,7 @@ func (dc *douyinCollector) Collect(recordType string) (map[string]interface{}, e
 	case "search":
 		return dc.client.Search("热门", 1, 20)
 	default:
-		return nil, fmt.Errorf("unknown type: %s", recordType)
+		return nil, aiverr.InvalidInput("douyin", fmt.Sprintf("unknown type: %s", recordType))
 	}
 }
 

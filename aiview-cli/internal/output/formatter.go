@@ -171,7 +171,7 @@ func NewTableWriter() *tabwriter.Writer {
 func RenderTable(data interface{}) error {
 	v := reflect.ValueOf(data)
 	if v.Kind() != reflect.Slice {
-		return fmt.Errorf("RenderTable: expected slice, got %T", data)
+		return aiverr.InvalidInput("output", fmt.Sprintf("RenderTable: expected slice, got %T", data))
 	}
 	if v.Len() == 0 {
 		return nil
@@ -201,7 +201,7 @@ func RenderTable(data interface{}) error {
 		firstElem = firstElem.Elem()
 	}
 	if firstElem.Kind() != reflect.Struct {
-		return fmt.Errorf("RenderTable: expected slice of structs or slices, got %T", data)
+		return aiverr.InvalidInput("output", fmt.Sprintf("RenderTable: expected slice of structs or slices, got %T", data))
 	}
 
 	t := firstElem.Type()
@@ -276,7 +276,7 @@ func RenderCSV(data interface{}) error {
 		firstElem = firstElem.Elem()
 	}
 	if firstElem.Kind() != reflect.Struct {
-		return fmt.Errorf("RenderCSV: expected slice of structs or slices, got %T", data)
+		return aiverr.InvalidInput("output", fmt.Sprintf("RenderCSV: expected slice of structs or slices, got %T", data))
 	}
 
 	t := firstElem.Type()

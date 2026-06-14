@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/pkg/aiview"
 )
 
@@ -243,7 +244,7 @@ func exportJSONExample() {
 func exportToJSON(data interface{}, filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
-		return fmt.Errorf("创建文件失败: %w", err)
+		return aiverr.APIError("export", fmt.Sprintf("创建文件失败: %v", err))
 	}
 	defer file.Close()
 

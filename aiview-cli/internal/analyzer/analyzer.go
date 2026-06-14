@@ -50,7 +50,7 @@ func New(store storage.Storage) *Analyzer {
 func (a *Analyzer) AnalyzeTrend(platform, recordType string, days int) (*TrendResult, error) {
 	records, err := a.store.Query(platform, recordType, 0) // 0 = no limit
 	if err != nil {
-		return nil, aiverr.Wrap(fmt.Errorf("query records: %w", err), aiverr.CodeAPIError, "analyzer")
+		return nil, aiverr.Wrap(err, aiverr.CodeAPIError, "analyzer")
 	}
 
 	// Group records by date

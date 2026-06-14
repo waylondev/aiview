@@ -24,7 +24,7 @@ type Client struct {
 func New(platformName string) (*Client, error) {
 	p, ok := platform.GetPlatform(platformName)
 	if !ok {
-		return nil, fmt.Errorf("platform %q not supported", platformName)
+		return nil, aiverr.InvalidInput("client", fmt.Sprintf("platform %q not supported", platformName))
 	}
 
 	cfg := config.DefaultConfig()
@@ -43,7 +43,7 @@ func (c *Client) PlatformName() string {
 // Returns error if the platform is not bilibili.
 func (c *Client) BilibiliClient() (*BilibiliClient, error) {
 	if c.platform.Name() != "bilibili" {
-		return nil, fmt.Errorf("not a bilibili client")
+		return nil, aiverr.InvalidInput("client", "not a bilibili client")
 	}
 
 	client, err := c.platform.NewClient(c.config)
@@ -58,7 +58,7 @@ func (c *Client) BilibiliClient() (*BilibiliClient, error) {
 // Returns error if the platform is not douyin.
 func (c *Client) DouyinClient() (*DouyinClient, error) {
 	if c.platform.Name() != "douyin" {
-		return nil, fmt.Errorf("not a douyin client")
+		return nil, aiverr.InvalidInput("client", "not a douyin client")
 	}
 
 	client, err := c.platform.NewClient(c.config)
@@ -88,7 +88,7 @@ func (c *Client) XiaohongshuClient() (*XiaohongshuClient, error) {
 // Returns error if the platform is not weibo.
 func (c *Client) WeiboClient() (*WeiboClient, error) {
 	if c.platform.Name() != "weibo" {
-		return nil, fmt.Errorf("not a weibo client")
+		return nil, aiverr.InvalidInput("client", "not a weibo client")
 	}
 
 	client, err := c.platform.NewClient(c.config)
@@ -118,7 +118,7 @@ func (c *Client) KuaishouClient() (*KuaishouClient, error) {
 // Returns error if the platform is not zhihu.
 func (c *Client) ZhihuClient() (*ZhihuClient, error) {
 	if c.platform.Name() != "zhihu" {
-		return nil, fmt.Errorf("not a zhihu client")
+		return nil, aiverr.InvalidInput("client", "not a zhihu client")
 	}
 
 	client, err := c.platform.NewClient(c.config)

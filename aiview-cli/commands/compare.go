@@ -33,12 +33,12 @@ func NewCompareCmd() *cobra.Command {
 			if _, err := os.Stat(dbPath); err == nil {
 				store, err = storage.NewSQLiteStorage(dbPath)
 				if err != nil {
-					return fmt.Errorf("open sqlite: %w", err)
+					return aiverr.Wrap(err, aiverr.CodeAPIError, "compare")
 				}
 			} else {
 				store, err = storage.NewJSONFileStorage(filepath.Join(homeDir, ".aiview", "data"))
 				if err != nil {
-					return fmt.Errorf("open json storage: %w", err)
+					return aiverr.APIError("compare", fmt.Sprintf("open json storage: %v", err))
 				}
 			}
 			defer store.Close()
