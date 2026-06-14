@@ -75,6 +75,61 @@ func TestClient_HTTPError(t *testing.T) {
 	}
 }
 
+func TestSearch(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]interface{}{
+			"status_code": 0,
+			"status_msg":  "success",
+			"data": map[string]interface{}{
+				"has_more":  false,
+				"aweme_list": []interface{}{
+					map[string]interface{}{
+						"aweme_id": "7000000000000000001",
+						"desc":     "搜索测试视频1",
+						"author": map[string]interface{}{
+							"nickname": "test_user",
+							"uid":      "100001",
+						},
+					},
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		Client: &base.Client{
+			HTTPClient: &http.Client{
+				Transport: &testTransport{serverURL: server.URL},
+			},
+			Limiter: ratelimit.New(100, 10),
+			Cache:   cache.New(5 * time.Minute),
+			BaseURL: server.URL,
+		},
+	}
+
+	result, err := client.Search("测试关键词", 1, 20)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	data, ok := result["data"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected data field in response")
+	}
+	awemeList, ok := data["aweme_list"].([]interface{})
+	if !ok || len(awemeList) == 0 {
+		t.Fatal("expected non-empty aweme_list")
+	}
+	aweme := awemeList[0].(map[string]interface{})
+	if aweme["desc"] != "搜索测试视频1" {
+		t.Errorf("expected '搜索测试视频1', got '%v'", aweme["desc"])
+	}
+}
+
 // testTransport rewrites requests to a test server.
 type testTransport struct {
 	serverURL string
