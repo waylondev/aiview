@@ -15,6 +15,7 @@ type SQLiteStorage struct {
 	db *sql.DB
 }
 
+// NewSQLiteStorage creates a new SQLite-based storage.
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {

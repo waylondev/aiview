@@ -17,6 +17,7 @@ type JSONFileStorage struct {
 	mu  sync.Mutex
 }
 
+// NewJSONFileStorage creates a new JSON file-based storage.
 func NewJSONFileStorage(dir string) (*JSONFileStorage, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, aiverr.APIError("storage", fmt.Sprintf("create storage dir: %v", err))

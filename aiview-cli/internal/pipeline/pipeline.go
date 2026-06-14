@@ -21,6 +21,7 @@ type Pipeline struct {
 	platform  string
 }
 
+// New creates a new Pipeline with the given platform, collector, and storage.
 func New(platform string, collector Collector, store storage.Storage) *Pipeline {
 	return &Pipeline{
 		collector: collector,

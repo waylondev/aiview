@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// SchemaVersion is the version of the output schema format.
 const SchemaVersion = "1"
 
 // Envelope is the agent-friendly output envelope.

@@ -109,10 +109,13 @@ func TestParseResponse(t *testing.T) {
 		defer server.Close()
 
 		c := NewClient(5, "", "test", server.URL, "", "test-platform")
-		resp, _ := http.Get(server.URL)
+		resp, err := http.Get(server.URL)
+		if err != nil {
+			t.Fatalf("http.Get failed: %v", err)
+		}
 		defer resp.Body.Close()
 
-		_, err := c.ParseResponse(resp)
+		_, err = c.ParseResponse(resp)
 		if err == nil {
 			t.Fatal("expected error for 401")
 		}
@@ -134,10 +137,13 @@ func TestParseResponse(t *testing.T) {
 		defer server.Close()
 
 		c := NewClient(5, "", "test", server.URL, "", "test-platform")
-		resp, _ := http.Get(server.URL)
+		resp, err := http.Get(server.URL)
+		if err != nil {
+			t.Fatalf("http.Get failed: %v", err)
+		}
 		defer resp.Body.Close()
 
-		_, err := c.ParseResponse(resp)
+		_, err = c.ParseResponse(resp)
 		if err == nil {
 			t.Fatal("expected error for 429")
 		}
@@ -158,10 +164,13 @@ func TestParseResponse(t *testing.T) {
 		defer server.Close()
 
 		c := NewClient(5, "", "test", server.URL, "", "test-platform")
-		resp, _ := http.Get(server.URL)
+		resp, err := http.Get(server.URL)
+		if err != nil {
+			t.Fatalf("http.Get failed: %v", err)
+		}
 		defer resp.Body.Close()
 
-		_, err := c.ParseResponse(resp)
+		_, err = c.ParseResponse(resp)
 		if err == nil {
 			t.Fatal("expected error for 500")
 		}
@@ -183,10 +192,13 @@ func TestParseResponse(t *testing.T) {
 		defer server.Close()
 
 		c := NewClient(5, "", "test", server.URL, "", "test-platform")
-		resp, _ := http.Get(server.URL)
+		resp, err := http.Get(server.URL)
+		if err != nil {
+			t.Fatalf("http.Get failed: %v", err)
+		}
 		defer resp.Body.Close()
 
-		_, err := c.ParseResponse(resp)
+		_, err = c.ParseResponse(resp)
 		if err == nil {
 			t.Fatal("expected parse error for invalid JSON")
 		}
