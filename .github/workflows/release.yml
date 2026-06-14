@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build binaries
+        working-directory: ./aiview-cli
+        run: |
+          mkdir -p dist
+          
+          # Windows
+          GOOS=windows GOARCH=amd64 go build -o dist/aiview-windows-amd64.exe .
+          GOOS=windows GOARCH=arm64 go build -o dist/aiview-windows-arm64.exe .
+          
+          # Linux
+          GOOS=linux GOARCH=amd64 go build -o dist/aiview-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -o dist/aiview-linux-arm64 .
+          
+          # macOS
+          GOOS=darwin GOARCH=amd64 go build -o dist/aiview-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -o dist/aiview-darwin-arm64 .
+          
+          ls -la dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            aiview-cli/dist/aiview-windows-amd64.exe
+            aiview-cli/dist/aiview-windows-arm64.exe
+            aiview-cli/dist/aiview-linux-amd64
+            aiview-cli/dist/aiview-linux-arm64
+            aiview-cli/dist/aiview-darwin-amd64
+            aiview-cli/dist/aiview-darwin-arm64
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
