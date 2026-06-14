@@ -6,10 +6,10 @@ import (
 
 type mockClient struct{}
 
-func (m *mockClient) PlatformName() string                          { return "douyin" }
-func (m *mockClient) GetHotSearch() (map[string]interface{}, error) { return nil, nil }
-func (m *mockClient) GetTrending() (map[string]interface{}, error)  { return nil, nil }
-func (m *mockClient) Search(keyword string, page int, count int) (map[string]interface{}, error) {
+func (m *mockClient) PlatformName() string                                   { return "douyin" }
+func (m *mockClient) GetHotSearch(count ...int) (map[string]interface{}, error) { return nil, nil }
+func (m *mockClient) GetTrending() (map[string]interface{}, error)              { return nil, nil }
+func (m *mockClient) Search(query string, page int, count ...int) (map[string]interface{}, error) {
 	return nil, nil
 }
 func (m *mockClient) GetVideoDetail(videoID string) (map[string]interface{}, error) { return nil, nil }

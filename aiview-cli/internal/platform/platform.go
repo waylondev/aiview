@@ -24,15 +24,20 @@ type Platform interface {
 
 // HotSearchable is the interface for platforms that support hot search/trending.
 type HotSearchable interface {
+	// GetHotSearch returns hot/trending search items. The optional count parameter
+	// specifies the maximum number of results to return.
 	GetHotSearch(count ...int) (map[string]interface{}, error)
 }
 
 // Searchable is the interface for platforms that support content search.
 type Searchable interface {
-	Search(query string, count ...int) (map[string]interface{}, error)
+	// Search performs a content search with the given query and page number.
+	// The optional count parameter specifies the number of results per page.
+	Search(query string, page int, count ...int) (map[string]interface{}, error)
 }
 
 // UserQueryable is the interface for platforms that support user info queries.
 type UserQueryable interface {
+	// GetUserInfo fetches user profile information by user ID.
 	GetUserInfo(uid string) (map[string]interface{}, error)
 }

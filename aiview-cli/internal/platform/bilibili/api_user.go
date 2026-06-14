@@ -9,8 +9,8 @@ import (
 	"github.com/jackwener/aiview/internal/helper"
 )
 
-// GetUserInfo fetches user profile information.
-func (c *Client) GetUserInfo(uid int) (*UserInfo, error) {
+// GetUserInfoCard fetches user profile information and returns a typed struct.
+func (c *Client) GetUserInfoCard(uid int) (*UserInfo, error) {
 	params := url.Values{}
 	params.Set("mid", strconv.Itoa(uid))
 	params.Set("photo", "false")
@@ -30,6 +30,27 @@ func (c *Client) GetUserInfo(uid int) (*UserInfo, error) {
 		Sign:      helper.GetString(card, "sign"),
 		Fans:      helper.GetInt(card, "fans"),
 		Following: helper.GetInt(card, "attention"),
+	}, nil
+}
+
+// GetUserInfo implements platform.UserQueryable.
+func (c *Client) GetUserInfo(uid string) (map[string]interface{}, error) {
+	id, err := strconv.Atoi(uid)
+	if err != nil {
+		return nil, aiverr.InvalidInput("bilibili", fmt.Sprintf("invalid uid %q: %v", uid, err))
+	}
+	info, err := c.GetUserInfoCard(id)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"mid":       info.MID,
+		"name":      info.Name,
+		"level":     info.Level,
+		"coins":     info.Coins,
+		"sign":      info.Sign,
+		"fans":      info.Fans,
+		"following": info.Following,
 	}, nil
 }
 

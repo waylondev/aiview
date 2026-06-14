@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/platform"
 	"github.com/jackwener/aiview/internal/platform/base"
 )
 
@@ -17,6 +18,11 @@ const (
 type Client struct {
 	*base.Client
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Zhihu API client.
 func NewClient(timeoutSec int, cookies string) *Client {
@@ -40,19 +46,19 @@ func (c *Client) checkAuth() error {
 
 // GetHotSearch fetches zhihu hot search terms.
 // API: /api/v4/search/top_search
-func (c *Client) GetHotSearch() (map[string]interface{}, error) {
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
 	return c.Get("/api/v4/search/top_search", nil)
 }
 
 // Search performs a search on Zhihu.
 // API: /api/v4/search_v3
-func (c *Client) Search(keyword string, page int) (map[string]interface{}, error) {
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
 	return c.Get("/api/v4/search_v3", url.Values{
-		"q":         {keyword},
-		"t":         {"general"},
+		"q":          {query},
+		"t":          {"general"},
 		"correction": {"1"},
-		"offset":    {fmt.Sprintf("%d", (page-1)*10)},
-		"limit":     {"10"},
+		"offset":     {fmt.Sprintf("%d", (page-1)*10)},
+		"limit":      {"10"},
 	})
 }
 

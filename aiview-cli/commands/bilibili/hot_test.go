@@ -24,7 +24,7 @@ func (m *mockClient) SearchVideo(keyword string, page int, order string, duratio
 func (m *mockClient) SearchUser(keyword string, page int) ([]biliapi.SearchUserResult, error) {
 	return nil, nil
 }
-func (m *mockClient) GetUserInfo(uid int) (*biliapi.UserInfo, error) { return nil, nil }
+func (m *mockClient) GetUserInfoCard(uid int) (*biliapi.UserInfo, error) { return nil, nil }
 func (m *mockClient) GetUserVideos(uid int, count int, order string, tid int, keyword string) ([]biliapi.VideoInfo, error) {
 	return nil, nil
 }
@@ -89,7 +89,7 @@ func (m *mockClient) GetRegionVideos(rid int, page int, count int, sort string) 
 }
 func (m *mockClient) GetLiveRoomInfo(roomID int) (map[string]interface{}, error) { return nil, nil }
 func (m *mockClient) GetPreciousVideos() (map[string]interface{}, error)         { return nil, nil }
-func (m *mockClient) GetHotSearch(limit int) (map[string]interface{}, error)     { return nil, nil }
+func (m *mockClient) GetHotSearch(count ...int) (map[string]interface{}, error) { return nil, nil }
 func (m *mockClient) GetVideoOnlineCount(bvid string) (map[string]interface{}, error) {
 	return nil, nil
 }

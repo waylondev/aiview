@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/jackwener/aiview/internal/platform/base"
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 )
 
 const (
@@ -17,6 +18,11 @@ const (
 type Client struct {
 	*base.Client
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Douyin API client.
 func NewClient(timeoutSec int, cookies string) *Client {
@@ -48,7 +54,7 @@ func (c *Client) checkAuth() error {
 
 // GetHotSearch fetches hot/douyin trending search terms.
 // Uses the hot search API endpoint.
-func (c *Client) GetHotSearch() (map[string]interface{}, error) {
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
 	// Douyin hot search API
 	return c.Get("/aweme/v1/web/hot/search/list/", url.Values{
 		"detail_list": {"1"},
@@ -110,13 +116,17 @@ func (c *Client) GetUserPosts(uid string, cursor int) (map[string]interface{}, e
 }
 
 // Search performs a search on Douyin for videos/users.
-func (c *Client) Search(keyword string, page int, count int) (map[string]interface{}, error) {
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
+	cnt := 20
+	if len(count) > 0 && count[0] > 0 {
+		cnt = count[0]
+	}
 	params := url.Values{}
-	params.Set("keyword", keyword)
+	params.Set("keyword", query)
 	params.Set("search_source", "normal_search")
 	params.Set("sort_type", "0")
 	params.Set("publish_time", "0")
-	params.Set("offset", fmt.Sprintf("%d", (page-1)*count))
-	params.Set("count", fmt.Sprintf("%d", count))
+	params.Set("offset", fmt.Sprintf("%d", (page-1)*cnt))
+	params.Set("count", fmt.Sprintf("%d", cnt))
 	return c.Get("/aweme/v1/web/general/search/single/", params)
 }

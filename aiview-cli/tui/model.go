@@ -81,20 +81,8 @@ func loadHotSearchCmd(platformName string) tea.Cmd {
 
 		// Type assert to get the specific client
 		switch c := client.(type) {
-		case interface{ GetHotSearch(int) (map[string]interface{}, error) }:
+		case platform.HotSearchable:
 			data, err := c.GetHotSearch(50)
-			if err != nil {
-				return errMsg{err: err}
-			}
-			return hotSearchLoadedMsg{data: data, platform: platformName}
-		case interface{ GetHotSearch() (map[string]interface{}, error) }:
-			data, err := c.GetHotSearch()
-			if err != nil {
-				return errMsg{err: err}
-			}
-			return hotSearchLoadedMsg{data: data, platform: platformName}
-		case interface{ GetHotNotes() (map[string]interface{}, error) }:
-			data, err := c.GetHotNotes()
 			if err != nil {
 				return errMsg{err: err}
 			}

@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/platform"
 	"github.com/jackwener/aiview/internal/platform/base"
 )
 
@@ -17,6 +18,11 @@ const (
 type Client struct {
 	*base.Client
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Kuaishou API client.
 func NewClient(timeoutSec int, cookies string) *Client {
@@ -40,7 +46,7 @@ func (c *Client) checkAuth() error {
 
 // GetHotSearch fetches kuaishou hot search terms.
 // API: /graphql (with query for hot search)
-func (c *Client) GetHotSearch() (map[string]interface{}, error) {
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
 	return c.Get("/graphql", url.Values{
 		"operationName": []string{"visionHotRank"},
 		"variables":     []string{"{}"},
@@ -50,10 +56,10 @@ func (c *Client) GetHotSearch() (map[string]interface{}, error) {
 
 // Search performs a search on Kuaishou.
 // API: /graphql (with search query)
-func (c *Client) Search(keyword string, page int) (map[string]interface{}, error) {
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
 	return c.Get("/graphql", url.Values{
 		"operationName": []string{"visionSearchPhoto"},
-		"variables":     []string{fmt.Sprintf(`{"keyword":"%s","page":%d}`, keyword, page)},
+		"variables":     []string{fmt.Sprintf(`{"keyword":"%s","page":%d}`, query, page)},
 		"query":         []string{"query visionSearchPhoto($keyword: String, $page: Int) { visionSearchPhoto(keyword: $keyword, page: $page) { feeds { id caption } } }"},
 	})
 }

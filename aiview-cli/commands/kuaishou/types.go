@@ -4,8 +4,8 @@ package kuaishou
 // Client defines the interface that the Kuaishou API client must satisfy for commands.
 type Client interface {
 	PlatformName() string
-	GetHotSearch() (map[string]interface{}, error)
-	Search(keyword string, page int) (map[string]interface{}, error)
+	GetHotSearch(count ...int) (map[string]interface{}, error)
+	Search(query string, page int, count ...int) (map[string]interface{}, error)
 	GetUserInfo(uid string) (map[string]interface{}, error)
 }
 

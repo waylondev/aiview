@@ -68,7 +68,7 @@ func (b *BilibiliClient) GetVideoInfo(bvid string) (*VideoInfo, error) {
 // GetUserInfo fetches user profile from Bilibili.
 func (b *BilibiliClient) GetUserInfo(uid int) (*UserInfo, error) {
 	biliClient := b.client.(*bilibili.Client)
-	u, err := biliClient.GetUserInfo(uid)
+	u, err := biliClient.GetUserInfoCard(uid)
 	if err != nil {
 		return nil, err
 	}

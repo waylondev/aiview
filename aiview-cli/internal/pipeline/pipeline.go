@@ -45,7 +45,7 @@ func (p *Pipeline) CollectAndStore(types []string) error {
 		}
 
 		if err := p.storage.Save(record); err != nil {
-			return aiverr.Wrap(fmt.Errorf("save %s: %w", t, err), aiverr.CodeAPIError, "pipeline")
+			return aiverr.Wrap(err, aiverr.CodeAPIError, "pipeline")
 		}
 
 		fmt.Printf("Collected and stored: %s/%s\n", p.platform, t)

@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/platform"
 	"github.com/jackwener/aiview/internal/platform/base"
 )
 
@@ -18,6 +19,11 @@ const (
 type Client struct {
 	*base.Client
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Xiaohongshu API client.
 func NewClient(timeoutSec int, cookies string) *Client {
@@ -65,6 +71,11 @@ func (c *Client) GetHotNotes() (map[string]interface{}, error) {
 	return c.Get("/api/sns/web/v1/search/hot", nil)
 }
 
+// GetHotSearch implements platform.HotSearchable.
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
+	return c.Get("/api/sns/web/v1/search/hot", nil)
+}
+
 // SearchNotes searches notes by keyword.
 func (c *Client) SearchNotes(keyword string, page int) (map[string]interface{}, error) {
 	return c.Get("/api/sns/web/v1/search/notes", toValues(map[string]string{
@@ -73,6 +84,11 @@ func (c *Client) SearchNotes(keyword string, page int) (map[string]interface{}, 
 		"sort":      "general",
 		"note_type": "0",
 	}))
+}
+
+// Search implements platform.Searchable.
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
+	return c.SearchNotes(query, page)
 }
 
 // GetNoteDetail returns note detail by note ID.

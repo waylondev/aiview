@@ -26,7 +26,7 @@ func NewUserCmd(getClient func() Client) *cobra.Command {
 				return err
 			}
 
-			info, err := client.GetUserInfo(uid)
+			info, err := client.GetUserInfoCard(uid)
 			if err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to get user info: %v", err), format)
 				return err

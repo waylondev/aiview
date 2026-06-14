@@ -16,7 +16,7 @@ type Client interface {
 	GetRelatedVideos(bvid string) ([]biliapi.VideoInfo, error)
 	SearchVideo(keyword string, page int, order string, duration int, tid int) ([]biliapi.SearchVideoResult, error)
 	SearchUser(keyword string, page int) ([]biliapi.SearchUserResult, error)
-	GetUserInfo(uid int) (*biliapi.UserInfo, error)
+	GetUserInfoCard(uid int) (*biliapi.UserInfo, error)
 	GetUserVideos(uid int, count int, order string, tid int, keyword string) ([]biliapi.VideoInfo, error)
 	GetHotVideos(page int, count int) ([]biliapi.VideoInfo, error)
 	GetRankVideos(rid int, day int, typeStr string) ([]biliapi.VideoInfo, error)
@@ -79,7 +79,7 @@ type Client interface {
 	GetPreciousVideos() (map[string]interface{}, error)
 
 	// Hot search
-	GetHotSearch(limit int) (map[string]interface{}, error)
+	GetHotSearch(count ...int) (map[string]interface{}, error)
 
 	// Video online count
 	GetVideoOnlineCount(bvid string) (map[string]interface{}, error)

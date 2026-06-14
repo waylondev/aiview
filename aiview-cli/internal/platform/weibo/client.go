@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/jackwener/aiview/internal/platform/base"
 	aiverr "github.com/jackwener/aiview/internal/errors"
+	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 )
 
 const (
@@ -17,6 +18,11 @@ const (
 type Client struct {
 	*base.Client
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Weibo API client.
 func NewClient(timeoutSec int, cookies string) *Client {
@@ -41,15 +47,15 @@ func (c *Client) checkAuth() error {
 
 // GetHotSearch fetches weibo hot search terms.
 // API: /ajax/side/hotSearch
-func (c *Client) GetHotSearch() (map[string]interface{}, error) {
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
 	return c.Get("/ajax/side/hotSearch", nil)
 }
 
 // Search performs a search on Weibo.
 // API: /ajax/statuses/search
-func (c *Client) Search(keyword string, page int) (map[string]interface{}, error) {
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
 	return c.Get("/ajax/statuses/search", url.Values{
-		"q":    {keyword},
+		"q":    {query},
 		"page": {fmt.Sprintf("%d", page)},
 	})
 }

@@ -85,6 +85,25 @@ func (c *Client) SearchSuggest(keyword string) (map[string]interface{}, error) {
 	return c.get("/x/web-interface/search/default", params)
 }
 
+// Search implements platform.Searchable by delegating to SearchVideo.
+func (c *Client) Search(query string, page int, count ...int) (map[string]interface{}, error) {
+	videos, err := c.SearchVideo(query, page, "", 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	// Convert to map for interface compliance
+	items := make([]interface{}, len(videos))
+	for i, v := range videos {
+		items[i] = map[string]interface{}{
+			"bvid":   v.BVID,
+			"title":  v.Title,
+			"author": v.Author,
+			"play":   v.Play,
+		}
+	}
+	return map[string]interface{}{"data": items}, nil
+}
+
 // GetHotVideos fetches popular/hot videos.
 func (c *Client) GetHotVideos(page int, count int) ([]VideoInfo, error) {
 	params := url.Values{}
@@ -184,9 +203,13 @@ func (c *Client) GetRecommendVideos(fresh bool, page int) (map[string]interface{
 }
 
 // GetHotSearch fetches trending/hot search keywords.
-func (c *Client) GetHotSearch(limit int) (map[string]interface{}, error) {
+func (c *Client) GetHotSearch(count ...int) (map[string]interface{}, error) {
+	limit := 50
+	if len(count) > 0 && count[0] > 0 {
+		limit = min(count[0], 50)
+	}
 	params := url.Values{}
-	params.Set("limit", strconv.Itoa(min(limit, 50)))
+	params.Set("limit", strconv.Itoa(limit))
 	return c.wbiGet("/x/web-interface/wbi/search/square", params)
 }
 

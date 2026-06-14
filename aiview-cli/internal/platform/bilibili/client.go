@@ -11,6 +11,7 @@ import (
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
 	"github.com/jackwener/aiview/internal/helper"
+	"github.com/jackwener/aiview/internal/platform"
 	"github.com/jackwener/aiview/internal/platform/base"
 )
 
@@ -24,6 +25,11 @@ type Client struct {
 	*base.Client
 	credential *Credential
 }
+
+// Compile-time interface assertions
+var _ platform.HotSearchable = (*Client)(nil)
+var _ platform.Searchable = (*Client)(nil)
+var _ platform.UserQueryable = (*Client)(nil)
 
 // NewClient creates a new Bilibili API client.
 func NewClient(timeoutSec int, cookies string, credential *Credential) *Client {

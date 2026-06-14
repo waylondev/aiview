@@ -4,9 +4,9 @@ package douyin
 // Client is the interface that the Douyin API client must satisfy for commands.
 type Client interface {
 	PlatformName() string
-	GetHotSearch() (map[string]interface{}, error)
+	GetHotSearch(count ...int) (map[string]interface{}, error)
 	GetTrending() (map[string]interface{}, error)
-	Search(keyword string, page int, count int) (map[string]interface{}, error)
+	Search(query string, page int, count ...int) (map[string]interface{}, error)
 	GetVideoDetail(videoID string) (map[string]interface{}, error)
 	GetVideoComments(videoID string, cursor int) (map[string]interface{}, error)
 	GetUserPosts(uid string, cursor int) (map[string]interface{}, error)
