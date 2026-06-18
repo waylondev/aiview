@@ -68,7 +68,7 @@ func NewCollectCmd(getClient func() Client) *cobra.Command {
 		Short: "Batch collect and store data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			// Create storage
 			homeDir, _ := os.UserHomeDir()

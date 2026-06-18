@@ -55,7 +55,7 @@ How to get bili_jct:
   2. Press F12 → Application → Cookies → bilibili.com
   3. Copy the value of bili_jct`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			// Auto browser login
 			if auto {
@@ -164,7 +164,7 @@ func NewLogoutCmd(authStore AuthProvider) *cobra.Command {
 		Short: "Logout",
 		Long:  `Clear locally saved login credentials.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 			if err := authStore.Clear(); err != nil {
 				output.EmitError("internal_error", fmt.Sprintf("Failed to clear credential: %v", err), format)
 				return err
@@ -186,7 +186,7 @@ func NewStatusCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 		Short: "Check login status",
 		Long:  `Check current Bilibili login status.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 			cred, err := authStore.GetCredential()
 
 			if format == output.FormatJSON || format == output.FormatYAML {
@@ -217,7 +217,7 @@ func NewWhoamiCmd(authStore AuthProvider, getClient func() Client) *cobra.Comman
 		Short: "View current user info",
 		Long:  `View currently logged-in Bilibili user info.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 			client := getClient()
 
 			info, err := client.GetSelfInfo()

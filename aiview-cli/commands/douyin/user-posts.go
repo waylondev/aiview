@@ -30,7 +30,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			result, err := client.GetUserPosts(args[0], cursor)
 			if err != nil {

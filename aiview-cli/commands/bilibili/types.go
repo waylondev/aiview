@@ -98,7 +98,7 @@ type AuthProvider interface {
 }
 
 // Credential holds authentication data.
-type Credential = biliapi.Credential
+type Credential = biliapi.BiliCredential
 
 // ActionResult holds the result of an action command.
 type ActionResult struct {

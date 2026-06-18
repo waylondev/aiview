@@ -100,7 +100,7 @@ func (c *Client) GetVideoSubtitle(bvid string) (*SubtitleInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", defaultUserAgent)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

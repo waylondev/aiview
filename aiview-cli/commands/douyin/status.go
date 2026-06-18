@@ -19,7 +19,7 @@ Examples:
   aiview douyin status --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			result, err := statusFn()
 			if err != nil {

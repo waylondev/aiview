@@ -80,8 +80,16 @@ func (s *SQLiteStorage) Query(platform, recordType string, limit int) ([]Record,
 		if err := rows.Scan(&r.Platform, &r.Type, &dataStr, &timeStr); err != nil {
 			continue
 		}
-		json.Unmarshal([]byte(dataStr), &r.Data)
-		r.CollectedAt, _ = time.Parse(time.RFC3339, timeStr)
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(dataStr), &data); err != nil {
+			continue
+		}
+		r.Data = data
+		t, err := time.Parse(time.RFC3339, timeStr)
+		if err != nil {
+			continue
+		}
+		r.CollectedAt = t
 		records = append(records, r)
 	}
 	return records, nil
@@ -108,8 +116,16 @@ func (s *SQLiteStorage) QueryAll(limit int) ([]Record, error) {
 		if err := rows.Scan(&r.Platform, &r.Type, &dataStr, &timeStr); err != nil {
 			continue
 		}
-		json.Unmarshal([]byte(dataStr), &r.Data)
-		r.CollectedAt, _ = time.Parse(time.RFC3339, timeStr)
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(dataStr), &data); err != nil {
+			continue
+		}
+		r.Data = data
+		t, err := time.Parse(time.RFC3339, timeStr)
+		if err != nil {
+			continue
+		}
+		r.CollectedAt = t
 		records = append(records, r)
 	}
 	return records, nil

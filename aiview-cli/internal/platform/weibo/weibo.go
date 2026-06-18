@@ -65,9 +65,9 @@ func (p *WeiboPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
 	}
-	timeout := 30
-	if p.config != nil && p.config.Platforms.Weibo.Timeout > 0 {
-		timeout = p.config.Platforms.Weibo.Timeout
+	timeout := config.DefaultTimeout
+	if p.config != nil && p.config.Platforms["weibo"].Timeout > 0 {
+		timeout = p.config.Platforms["weibo"].Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient

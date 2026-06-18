@@ -28,7 +28,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			result, err := client.GetHotSearch()
 			if err != nil {

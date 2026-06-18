@@ -66,9 +66,9 @@ func (p *XiaohongshuPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
 	}
-	timeout := 30
-	if p.config != nil && p.config.Platforms.Xiaohongshu.Timeout > 0 {
-		timeout = p.config.Platforms.Xiaohongshu.Timeout
+	timeout := config.DefaultTimeout
+	if p.config != nil && p.config.Platforms["xiaohongshu"].Timeout > 0 {
+		timeout = p.config.Platforms["xiaohongshu"].Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient

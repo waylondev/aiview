@@ -65,9 +65,9 @@ func (p *ZhihuPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
 	}
-	timeout := 30
-	if p.config != nil && p.config.Platforms.Zhihu.Timeout > 0 {
-		timeout = p.config.Platforms.Zhihu.Timeout
+	timeout := config.DefaultTimeout
+	if p.config != nil && p.config.Platforms["zhihu"].Timeout > 0 {
+		timeout = p.config.Platforms["zhihu"].Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient

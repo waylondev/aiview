@@ -1,12 +1,19 @@
 package douyin
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/jackwener/aiview/internal/auth"
 )
 
 func TestAuthStore_SaveAndGetCookie(t *testing.T) {
+	// Ensure .aiview directory exists
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".aiview")
+	os.MkdirAll(dir, 0700)
+
 	store := auth.NewCookieStore("douyin")
 
 	// Save
@@ -28,6 +35,11 @@ func TestAuthStore_SaveAndGetCookie(t *testing.T) {
 }
 
 func TestAuthStore_ClearCookie(t *testing.T) {
+	// Ensure .aiview directory exists
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".aiview")
+	os.MkdirAll(dir, 0700)
+
 	store := auth.NewCookieStore("douyin")
 
 	store.SaveCookie("test_cookie=abc")

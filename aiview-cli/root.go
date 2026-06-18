@@ -72,7 +72,10 @@ func Execute() error {
 			defer store.Close()
 
 			sched := scheduler.New()
-			server := dashboard.NewServer(port, store, sched)
+			server, err := dashboard.NewServer(port, store, sched)
+			if err != nil {
+				return aiverr.APIError("dashboard", fmt.Sprintf("failed to create server: %v", err))
+			}
 
 			fmt.Printf("Dashboard starting at http://localhost:%d\n", port)
 			return server.Start()
@@ -98,7 +101,12 @@ func getConfig() *config.Config {
 
 // getOutputFormat resolves the current output format.
 func getOutputFormat() output.Format {
-	return output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
+	f, err := output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return output.FormatTable
+	}
+	return f
 }
 
 // isVerbose returns whether verbose logging is enabled.
@@ -108,7 +116,10 @@ func isVerbose() bool {
 
 // exitError prints an error message and exits with code 1.
 func exitError(code, message string) {
-	format := output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
+	format, err := output.ResolveFormat(asJSON, asYAML, asTable, asCSV)
+	if err != nil {
+		format = output.FormatTable
+	}
 	output.EmitError(code, message, format)
 	os.Exit(1)
 }

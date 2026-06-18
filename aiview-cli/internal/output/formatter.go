@@ -45,7 +45,7 @@ const (
 )
 
 // ResolveFormat determines the output format based on flags and TTY status.
-func ResolveFormat(asJSON, asYAML, asTable, asCSV bool) Format {
+func ResolveFormat(asJSON, asYAML, asTable, asCSV bool) (Format, error) {
 	count := 0
 	for _, v := range []bool{asJSON, asYAML, asTable, asCSV} {
 		if v {
@@ -53,36 +53,35 @@ func ResolveFormat(asJSON, asYAML, asTable, asCSV bool) Format {
 		}
 	}
 	if count > 1 {
-		fmt.Fprintln(os.Stderr, "Cannot use multiple output format flags simultaneously")
-		os.Exit(1)
+		return FormatAuto, fmt.Errorf("only one output format can be specified")
 	}
 	if asJSON {
-		return FormatJSON
+		return FormatJSON, nil
 	}
 	if asYAML {
-		return FormatYAML
+		return FormatYAML, nil
 	}
 	if asTable {
-		return FormatTable
+		return FormatTable, nil
 	}
 	if asCSV {
-		return FormatCSV
+		return FormatCSV, nil
 	}
 	outputMode := strings.ToLower(os.Getenv("OUTPUT"))
 	switch outputMode {
 	case "json":
-		return FormatJSON
+		return FormatJSON, nil
 	case "yaml":
-		return FormatYAML
+		return FormatYAML, nil
 	case "csv":
-		return FormatCSV
+		return FormatCSV, nil
 	case "rich", "table":
-		return FormatTable
+		return FormatTable, nil
 	}
 	if !isTTY() {
-		return FormatYAML
+		return FormatYAML, nil
 	}
-	return FormatTable
+	return FormatTable, nil
 }
 
 // isTTY checks if stdout is a terminal.
@@ -322,7 +321,7 @@ func FormatCount(n int) string {
 }
 
 // GetFormat extracts the output format from cobra command flags.
-func GetFormat(cmd *cobra.Command) Format {
+func GetFormat(cmd *cobra.Command) (Format, error) {
 	parent := cmd
 	for parent.HasParent() {
 		parent = parent.Parent()
@@ -332,4 +331,15 @@ func GetFormat(cmd *cobra.Command) Format {
 	asTable, _ := parent.Flags().GetBool("table")
 	asCSV, _ := parent.Flags().GetBool("csv")
 	return ResolveFormat(asJSON, asYAML, asTable, asCSV)
+}
+
+// MustGetFormat extracts the output format from cobra command flags.
+// On error (e.g. multiple format flags), it prints to stderr and returns FormatTable.
+func MustGetFormat(cmd *cobra.Command) Format {
+	f, err := GetFormat(cmd)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return FormatTable
+	}
+	return f
 }

@@ -11,6 +11,13 @@ import (
 	"github.com/jackwener/aiview/internal/storage"
 )
 
+const (
+	// maxKeywordSearchLength is the maximum data length for keyword search.
+	maxKeywordSearchLength = 10000
+	// defaultTrendLimit is the maximum number of records to query for trend analysis.
+	defaultTrendLimit = 1000
+)
+
 // TrendPoint represents a single data point in a trend.
 type TrendPoint struct {
 	Time  time.Time
@@ -49,7 +56,7 @@ func New(store storage.Storage) *Analyzer {
 
 // AnalyzeTrend analyzes trend data for a platform and type over the given days.
 func (a *Analyzer) AnalyzeTrend(platform, recordType string, days int) (*TrendResult, error) {
-	records, err := a.store.Query(platform, recordType, 0) // 0 = no limit
+	records, err := a.store.Query(platform, recordType, defaultTrendLimit)
 	if err != nil {
 		return nil, aiverr.Wrap(err, aiverr.CodeAPIError, "analyzer")
 	}
@@ -149,7 +156,7 @@ func (a *Analyzer) ComparePlatforms(keyword string, platforms []string) ([]Compa
 
 func containsKeyword(data, keyword string) bool {
 	return len(data) > 0 && len(keyword) > 0 &&
-		(len(data) < 10000 && strings.Contains(strings.ToLower(data), strings.ToLower(keyword)))
+		(len(data) < maxKeywordSearchLength && strings.Contains(strings.ToLower(data), strings.ToLower(keyword)))
 }
 
 func extractTitle(data map[string]interface{}) (string, bool) {

@@ -23,7 +23,7 @@ type (
 	WatchLaterItem   = bilibilitypes.WatchLaterItem
 	DynamicItem      = bilibilitypes.DynamicItem
 	DynamicStats     = bilibilitypes.DynamicStats
-	Credential       = bilibilitypes.Credential
+	Credential       = bilibilitypes.BiliCredential
 	DanmakuInfo      = bilibilitypes.DanmakuInfo
 	VideoTag         = bilibilitypes.VideoTag
 	FansUserInfo     = bilibilitypes.FansUserInfo

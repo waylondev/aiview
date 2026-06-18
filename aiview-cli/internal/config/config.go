@@ -2,7 +2,16 @@
 package config
 
 import (
+	"errors"
+
 	"github.com/spf13/viper"
+)
+
+const (
+	// DefaultTimeout is the default HTTP request timeout in seconds.
+	DefaultTimeout = 30
+	// DefaultCacheTTL is the default cache time-to-live in seconds.
+	DefaultCacheTTL = 300
 )
 
 // Config holds the global configuration for aiview.
@@ -20,24 +29,17 @@ type PlatformConfig struct {
 }
 
 // PlatformsConfig holds platform-specific configurations.
-type PlatformsConfig struct {
-	Bilibili    PlatformConfig `mapstructure:"bilibili"`
-	Douyin      PlatformConfig `mapstructure:"douyin"`
-	Weibo       PlatformConfig `mapstructure:"weibo"`
-	Kuaishou    PlatformConfig `mapstructure:"kuaishou"`
-	Xiaohongshu PlatformConfig `mapstructure:"xiaohongshu"`
-	Zhihu       PlatformConfig `mapstructure:"zhihu"`
-}
+type PlatformsConfig map[string]PlatformConfig
 
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
 		Platform: "bilibili",
-		CacheTTL: 300,
+		CacheTTL: DefaultCacheTTL,
 		Output:   "auto",
 		Platforms: PlatformsConfig{
-			Bilibili: PlatformConfig{
-				Timeout: 30,
+			"bilibili": PlatformConfig{
+				Timeout: DefaultTimeout,
 			},
 		},
 	}
@@ -57,17 +59,18 @@ func LoadConfig() (*Config, error) {
 
 	// Bind platform-specific config defaults
 	viper.SetDefault("platform", "bilibili")
-	viper.SetDefault("cache_ttl", 300)
+	viper.SetDefault("cache_ttl", DefaultCacheTTL)
 	viper.SetDefault("output", "auto")
-	viper.SetDefault("platforms.bilibili.timeout", 30)
-	viper.SetDefault("platforms.douyin.timeout", 30)
-	viper.SetDefault("platforms.weibo.timeout", 30)
-	viper.SetDefault("platforms.kuaishou.timeout", 30)
-	viper.SetDefault("platforms.xiaohongshu.timeout", 30)
-	viper.SetDefault("platforms.zhihu.timeout", 30)
+	viper.SetDefault("platforms.bilibili.timeout", DefaultTimeout)
+	viper.SetDefault("platforms.douyin.timeout", DefaultTimeout)
+	viper.SetDefault("platforms.weibo.timeout", DefaultTimeout)
+	viper.SetDefault("platforms.kuaishou.timeout", DefaultTimeout)
+	viper.SetDefault("platforms.xiaohongshu.timeout", DefaultTimeout)
+	viper.SetDefault("platforms.zhihu.timeout", DefaultTimeout)
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var configErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &configErr) {
 			return nil, err
 		}
 		// Config file not found, use defaults

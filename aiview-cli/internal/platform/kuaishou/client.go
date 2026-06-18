@@ -10,8 +10,11 @@ import (
 )
 
 const (
-	baseURL   = "https://www.kuaishou.com"
-	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	baseURL = "https://www.kuaishou.com"
+
+	// HTTP client constants
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	defaultReferer   = "https://www.kuaishou.com/"
 )
 
 // Client is the Kuaishou API client.
@@ -27,7 +30,7 @@ var _ platform.UserQueryable = (*Client)(nil)
 // NewClient creates a new Kuaishou API client.
 func NewClient(timeoutSec int, cookies string) *Client {
 	return &Client{
-		Client: base.NewClient(timeoutSec, cookies, userAgent, baseURL, "https://www.kuaishou.com/", "kuaishou"),
+		Client: base.NewClient(timeoutSec, cookies, defaultUserAgent, baseURL, defaultReferer, "kuaishou"),
 	}
 }
 

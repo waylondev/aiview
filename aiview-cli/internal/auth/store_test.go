@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestStore_SaveAndLoad(t *testing.T) {
@@ -14,12 +15,9 @@ func TestStore_SaveAndLoad(t *testing.T) {
 	}
 
 	cred := &Credential{
-		Sessdata:    "test_sessdata",
-		BiliJct:     "test_bili_jct",
-		AcTimeValue: "test_ac_time",
-		Buvid3:      "test_buvid3",
-		Buvid4:      "test_buvid4",
-		DedeUserID:  "test_dedeuserid",
+		Platform: "bilibili",
+		Cookie:   "test_cookie_data",
+		ExpireAt: time.Now().Unix() + 3600,
 	}
 
 	if err := store.Save(cred); err != nil {
@@ -33,11 +31,11 @@ func TestStore_SaveAndLoad(t *testing.T) {
 	if loaded == nil {
 		t.Fatal("expected non-nil credential")
 	}
-	if loaded.Sessdata != "test_sessdata" {
-		t.Errorf("expected 'test_sessdata', got '%s'", loaded.Sessdata)
+	if loaded.Platform != "bilibili" {
+		t.Errorf("expected Platform 'bilibili', got '%s'", loaded.Platform)
 	}
-	if loaded.BiliJct != "test_bili_jct" {
-		t.Errorf("expected 'test_bili_jct', got '%s'", loaded.BiliJct)
+	if loaded.Cookie != "test_cookie_data" {
+		t.Errorf("expected Cookie 'test_cookie_data', got '%s'", loaded.Cookie)
 	}
 	if loaded.SavedAt == 0 {
 		t.Error("expected non-zero SavedAt")
@@ -67,7 +65,7 @@ func TestStore_Clear(t *testing.T) {
 		File: filepath.Join(dir, "test_credential.json"),
 	}
 
-	store.Save(&Credential{Sessdata: "test"})
+	store.Save(&Credential{Platform: "test", Cookie: "test"})
 
 	if err := store.Clear(); err != nil {
 		t.Fatalf("Clear failed: %v", err)
@@ -97,9 +95,8 @@ func TestCredential_IsValid(t *testing.T) {
 		c    *Credential
 		want bool
 	}{
-		{"valid", &Credential{Sessdata: "abc"}, true},
+		{"valid", &Credential{Cookie: "abc"}, true},
 		{"empty", &Credential{}, false},
-		{"only_jct", &Credential{BiliJct: "abc"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -116,8 +113,7 @@ func TestCredential_HasWriteCapability(t *testing.T) {
 		c    *Credential
 		want bool
 	}{
-		{"has", &Credential{BiliJct: "abc"}, true},
-		{"no", &Credential{Sessdata: "abc"}, false},
+		{"has", &Credential{Cookie: "abc"}, true},
 		{"empty", &Credential{}, false},
 	}
 	for _, tt := range tests {

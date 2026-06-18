@@ -27,7 +27,7 @@ func NewCommentCmd(authStore AuthProvider, getClient func() Client) *cobra.Comma
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			bvid, err := ExtractBVID(args[0])
 			if err != nil {
@@ -125,7 +125,7 @@ func NewCommentDeleteCmd(authStore AuthProvider, getClient func() Client) *cobra
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(true)
 			if err != nil {

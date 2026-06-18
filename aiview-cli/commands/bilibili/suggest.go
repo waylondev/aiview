@@ -18,7 +18,7 @@ func NewSuggestCmd(getClient func() Client) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			data, err := client.SearchSuggest(args[0])
 			if err != nil {

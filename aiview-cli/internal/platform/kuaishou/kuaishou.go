@@ -65,9 +65,9 @@ func (p *KuaishouPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
 	}
-	timeout := 30
-	if p.config != nil && p.config.Platforms.Kuaishou.Timeout > 0 {
-		timeout = p.config.Platforms.Kuaishou.Timeout
+	timeout := config.DefaultTimeout
+	if p.config != nil && p.config.Platforms["kuaishou"].Timeout > 0 {
+		timeout = p.config.Platforms["kuaishou"].Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient

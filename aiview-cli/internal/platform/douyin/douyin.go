@@ -74,9 +74,9 @@ func (p *DouyinPlatform) getClient() *Client {
 	if p.cachedClient != nil {
 		return p.cachedClient
 	}
-	timeout := 30
-	if p.config != nil && p.config.Platforms.Douyin.Timeout > 0 {
-		timeout = p.config.Platforms.Douyin.Timeout
+	timeout := config.DefaultTimeout
+	if p.config != nil && p.config.Platforms["douyin"].Timeout > 0 {
+		timeout = p.config.Platforms["douyin"].Timeout
 	}
 	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient

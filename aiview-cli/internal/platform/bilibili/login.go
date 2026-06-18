@@ -34,7 +34,7 @@ func GenerateQRCode() (*QRLoginSession, error) {
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to create QR code request: %v", err))
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", defaultUserAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
 	req.Header.Set("Referer", "https://www.bilibili.com/")
 
@@ -72,7 +72,7 @@ func PollQRCode(qrcodeKey string) (QRLoginState, *Credential, error) {
 	if err != nil {
 		return QRLoginPending, nil, aiverr.NetworkError("bilibili", fmt.Sprintf("Failed to poll QR code status: %v", err))
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", defaultUserAgent)
 	req.Header.Set("Origin", "https://www.bilibili.com")
 	req.Header.Set("Referer", "https://www.bilibili.com/")
 

@@ -27,7 +27,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			result, err := client.SearchNotes(args[0], page)
 			if err != nil {

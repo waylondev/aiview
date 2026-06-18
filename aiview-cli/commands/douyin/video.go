@@ -45,7 +45,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			videoID, err := extractVideoID(args[0])
 			if err != nil {

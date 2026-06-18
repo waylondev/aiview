@@ -2,20 +2,21 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-// Credential holds authentication data for a platform.
+// credentialTTL is the default TTL for credentials (7 days).
+const credentialTTL = 7 * 24 * time.Hour
+
+// Credential holds generic authentication data for any platform.
 type Credential struct {
-	Sessdata      string `json:"sessdata"`
-	BiliJct       string `json:"bili_jct"`
-	AcTimeValue   string `json:"ac_time_value"`
-	Buvid3        string `json:"buvid3"`
-	Buvid4        string `json:"buvid4"`
-	DedeUserID    string `json:"dedeuserid"`
-	SavedAt       int64  `json:"saved_at"`
+	Platform string `json:"platform"`
+	Cookie   string `json:"cookie"`
+	ExpireAt int64  `json:"expire_at"`
+	SavedAt  int64  `json:"saved_at"`
 }
 
 // Store manages credential persistence.
@@ -25,13 +26,16 @@ type Store struct {
 }
 
 // NewStore creates a new credential store.
-func NewStore(platform string) *Store {
-	home, _ := os.UserHomeDir()
+func NewStore(platform string) (*Store, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
+	}
 	dir := filepath.Join(home, ".aiview")
 	return &Store{
 		Dir:  dir,
 		File: filepath.Join(dir, platform+"_credential.json"),
-	}
+	}, nil
 }
 
 // IsStale checks if the credential is older than TTL days.
@@ -39,17 +43,18 @@ func (c *Credential) IsStale(ttlDays int) bool {
 	if c.SavedAt == 0 {
 		return true
 	}
-	return time.Now().Unix()-c.SavedAt > int64(ttlDays*86400)
+	ttl := time.Duration(ttlDays) * 24 * time.Hour
+	return time.Since(time.Unix(c.SavedAt, 0)) > ttl
 }
 
 // IsValid checks if the credential has the minimum required fields.
 func (c *Credential) IsValid() bool {
-	return c.Sessdata != ""
+	return c.Cookie != ""
 }
 
 // HasWriteCapability checks if the credential supports write operations.
 func (c *Credential) HasWriteCapability() bool {
-	return c.BiliJct != ""
+	return c.Cookie != ""
 }
 
 // Save saves a credential to disk.
@@ -58,7 +63,7 @@ func (s *Store) Save(c *Credential) error {
 		return err
 	}
 	c.SavedAt = time.Now().Unix()
-	data, err := json.MarshalIndent(c, "", "  ")
+	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
@@ -111,14 +116,17 @@ func NewCookieStore(platform string) *CookieStore {
 
 // SaveCookie saves the cookie to disk.
 func (s *CookieStore) SaveCookie(cookie string) error {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
 	dir := filepath.Join(home, ".aiview")
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
 	}
-	file := filepath.Join(dir, s.platform+"_credential.json")
+	file := filepath.Join(dir, s.platform+"_cookie.json")
 	cred := cookieCredential{Cookie: cookie}
-	data, err := json.MarshalIndent(cred, "", "  ")
+	data, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
@@ -127,9 +135,12 @@ func (s *CookieStore) SaveCookie(cookie string) error {
 
 // GetCookie loads the saved cookie from disk.
 func (s *CookieStore) GetCookie() (string, error) {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
 	dir := filepath.Join(home, ".aiview")
-	file := filepath.Join(dir, s.platform+"_credential.json")
+	file := filepath.Join(dir, s.platform+"_cookie.json")
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return "", err
@@ -143,9 +154,12 @@ func (s *CookieStore) GetCookie() (string, error) {
 
 // ClearCookie removes the stored credential from disk.
 func (s *CookieStore) ClearCookie() error {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
 	dir := filepath.Join(home, ".aiview")
-	file := filepath.Join(dir, s.platform+"_credential.json")
+	file := filepath.Join(dir, s.platform+"_cookie.json")
 	if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
 		return err
 	}

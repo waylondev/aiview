@@ -17,7 +17,7 @@ func NewHotCmd(getClient func() Client) *cobra.Command {
 		Long:  `View Bilibili trending videos.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			videos, err := client.GetHotVideos(1, maxResults)
 			if err != nil {
@@ -55,7 +55,7 @@ func NewRankCmd(getClient func() Client) *cobra.Command {
 		Long:  `View Bilibili rankings.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			videos, err := client.GetRankVideos(rid, day, typeStr)
 			if err != nil {
@@ -93,7 +93,7 @@ func NewFeedCmd(authStore AuthProvider, getClient func() Client) *cobra.Command 
 		Long:  `View dynamic feed (login required).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			cred, err := authStore.RequireCredential(false)
 			if err != nil {

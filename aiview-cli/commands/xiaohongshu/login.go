@@ -30,7 +30,7 @@ Examples:
   aiview xiaohongshu login --auto`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			// Auto browser login
 			if auto {

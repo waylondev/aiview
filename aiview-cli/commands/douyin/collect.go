@@ -49,7 +49,7 @@ Requires login cookie for full access.`,
 			}
 
 			client := getClient()
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			// Create storage
 			homeDir, _ := os.UserHomeDir()

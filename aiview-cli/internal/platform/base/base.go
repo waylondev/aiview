@@ -15,6 +15,12 @@ import (
 	"github.com/jackwener/aiview/internal/ratelimit"
 )
 
+const (
+	defaultRateLimit  = 2
+	defaultRateBucket = 5
+	defaultCacheTTL   = 5 * time.Minute
+)
+
 // Client contains the common fields shared by all platform API clients.
 type Client struct {
 	HTTPClient *http.Client
@@ -34,8 +40,8 @@ func NewClient(timeoutSec int, cookies, userAgent, baseURL, referer, platform st
 			Timeout: time.Duration(timeoutSec) * time.Second,
 		},
 		Cookies:   cookies,
-		Limiter:   ratelimit.New(2, 5),
-		Cache:     cache.New(5 * time.Minute),
+		Limiter:   ratelimit.New(defaultRateLimit, defaultRateBucket),
+		Cache:     cache.New(defaultCacheTTL),
 		UserAgent: userAgent,
 		BaseURL:   baseURL,
 		Referer:   referer,

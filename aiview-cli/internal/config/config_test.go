@@ -13,8 +13,8 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.CacheTTL != 300 {
 		t.Errorf("expected 300, got %d", cfg.CacheTTL)
 	}
-	if cfg.Platforms.Bilibili.Timeout != 30 {
-		t.Errorf("expected 30, got %d", cfg.Platforms.Bilibili.Timeout)
+	if cfg.Platforms["bilibili"].Timeout != 30 {
+		t.Errorf("expected 30, got %d", cfg.Platforms["bilibili"].Timeout)
 	}
 }
 

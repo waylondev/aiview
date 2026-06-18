@@ -33,7 +33,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 			keyword := args[0]
 
 			result, err := client.Search(keyword, page, count)

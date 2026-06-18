@@ -18,7 +18,7 @@ Examples:
   aiview douyin logout`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			if err := logoutFn(); err != nil {
 				output.EmitError("api_error", fmt.Sprintf("Failed to logout: %v", err), format)

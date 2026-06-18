@@ -129,8 +129,8 @@ type (
 		Like    int `json:"like"`
 	}
 
-	// Credential holds authentication data.
-	Credential struct {
+	// BiliCredential holds Bilibili-specific authentication data.
+	BiliCredential struct {
 		Sessdata    string `json:"sessdata"`
 		BiliJct     string `json:"bili_jct"`
 		AcTimeValue string `json:"ac_time_value"`
@@ -168,17 +168,17 @@ type FansUserInfo struct {
 }
 
 // IsValid checks if the credential has the minimum required fields.
-func (c *Credential) IsValid() bool {
+func (c *BiliCredential) IsValid() bool {
 	return c != nil && c.Sessdata != ""
 }
 
 // HasWriteCapability checks if the credential supports write operations.
-func (c *Credential) HasWriteCapability() bool {
+func (c *BiliCredential) HasWriteCapability() bool {
 	return c != nil && c.BiliJct != ""
 }
 
 // IsStale checks if the credential is older than TTL days.
-func (c *Credential) IsStale(ttlDays int) bool {
+func (c *BiliCredential) IsStale(ttlDays int) bool {
 	if c == nil || c.SavedAt == 0 {
 		return true
 	}

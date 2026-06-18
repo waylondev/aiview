@@ -74,7 +74,12 @@ func (c *Cache) Stop() {
 }
 
 func (c *Cache) cleanup() {
-	ticker := time.NewTicker(time.Minute)
+	// Cleanup interval is TTL/10, minimum 10 seconds
+	interval := c.ttl / 10
+	if interval < 10*time.Second {
+		interval = 10 * time.Second
+	}
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {

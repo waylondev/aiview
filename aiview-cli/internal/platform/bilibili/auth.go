@@ -1,6 +1,8 @@
 package bilibili
 
 import (
+	"encoding/json"
+
 	"github.com/jackwener/aiview/internal/auth"
 	aiverr "github.com/jackwener/aiview/internal/errors"
 )
@@ -12,21 +14,23 @@ type AuthStore struct {
 
 // NewAuthStore creates a new bilibili auth store.
 func NewAuthStore() *AuthStore {
+	store, _ := auth.NewStore("bilibili")
 	return &AuthStore{
-		store: auth.NewStore("bilibili"),
+		store: store,
 	}
 }
 
 // Save saves the credential.
 func (a *AuthStore) Save(c *Credential) error {
+	// Serialize bilibili-specific fields to JSON and store in generic Cookie field
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
 	ac := &auth.Credential{
-		Sessdata:    c.Sessdata,
-		BiliJct:     c.BiliJct,
-		AcTimeValue: c.AcTimeValue,
-		Buvid3:      c.Buvid3,
-		Buvid4:      c.Buvid4,
-		DedeUserID:  c.DedeUserID,
-		SavedAt:     c.SavedAt,
+		Platform: "bilibili",
+		Cookie:   string(data),
+		SavedAt:  c.SavedAt,
 	}
 	return a.store.Save(ac)
 }
@@ -37,15 +41,13 @@ func (a *AuthStore) Load() (*Credential, error) {
 	if err != nil || c == nil {
 		return nil, err
 	}
-	return &Credential{
-		Sessdata:    c.Sessdata,
-		BiliJct:     c.BiliJct,
-		AcTimeValue: c.AcTimeValue,
-		Buvid3:      c.Buvid3,
-		Buvid4:      c.Buvid4,
-		DedeUserID:  c.DedeUserID,
-		SavedAt:     c.SavedAt,
-	}, nil
+	// Deserialize bilibili-specific fields from generic Cookie field
+	var bc Credential
+	if err := json.Unmarshal([]byte(c.Cookie), &bc); err != nil {
+		return nil, err
+	}
+	bc.SavedAt = c.SavedAt
+	return &bc, nil
 }
 
 // Clear removes the credential.

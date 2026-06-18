@@ -2,21 +2,30 @@
 package bilibili
 
 import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/jackwener/aiview/internal/auth"
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	biliCommands "github.com/jackwener/aiview/commands/bilibili"
 	"github.com/spf13/cobra"
 )
 
 // BilibiliPlatform implements the platform.Platform interface for Bilibili.
 type BilibiliPlatform struct {
-	authStore *AuthStore
+	*base.CookiePlatformBase
+	credStore    *auth.Store
+	cachedClient *Client
 }
 
 // NewPlatform creates a new Bilibili platform instance.
 func NewPlatform() *BilibiliPlatform {
+	credStore, _ := auth.NewStore("bilibili")
 	return &BilibiliPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("bilibili"),
+		credStore:          credStore,
 	}
 }
 
@@ -36,8 +45,50 @@ func (p *BilibiliPlatform) NewClient(cfg *config.Config) (platform.Client, error
 
 // buildClient creates a client using the current credential.
 func (p *BilibiliPlatform) buildClient() *Client {
-	cred := p.authStore.GetCredentialOrNil()
-	return NewClient(30, BuildCookieString(cred), cred)
+	if p.cachedClient != nil {
+		return p.cachedClient
+	}
+	cred := p.getCredentialOrNil()
+	p.cachedClient = NewClient(config.DefaultTimeout, BuildCookieString(cred), cred)
+	return p.cachedClient
+}
+
+// getCredentialOrNil returns the credential or nil if not available.
+func (p *BilibiliPlatform) getCredentialOrNil() *Credential {
+	cred, _ := p.credStore.Load()
+	if cred == nil {
+		return nil
+	}
+	return authCredToBili(cred)
+}
+
+// authCredToBili converts auth.Credential to bilibili Credential.
+func authCredToBili(c *auth.Credential) *Credential {
+	if c == nil {
+		return nil
+	}
+	var bc Credential
+	if err := json.Unmarshal([]byte(c.Cookie), &bc); err != nil {
+		return nil
+	}
+	bc.SavedAt = c.SavedAt
+	return &bc
+}
+
+// biliCredToAuth converts bilibili Credential to auth.Credential.
+func biliCredToAuth(c *Credential) *auth.Credential {
+	if c == nil {
+		return nil
+	}
+	data, err := json.Marshal(c)
+	if err != nil {
+		return nil
+	}
+	return &auth.Credential{
+		Platform: "bilibili",
+		Cookie:   string(data),
+		SavedAt:  c.SavedAt,
+	}
 }
 
 // Commands returns all Bilibili commands.
@@ -137,9 +188,50 @@ func (p *BilibiliPlatform) Commands() []*cobra.Command {
 	return []*cobra.Command{biliCmd}
 }
 
-// GetAuthStore returns the platform's auth store.
-func (p *BilibiliPlatform) GetAuthStore() *AuthStore {
-	return p.authStore
+// GetAuthStore returns an AuthProvider adapter for the platform.
+func (p *BilibiliPlatform) GetAuthStore() biliCommands.AuthProvider {
+	return &authAdapter{store: p.credStore}
+}
+
+// authAdapter adapts auth.Store to the AuthProvider interface.
+type authAdapter struct {
+	store *auth.Store
+}
+
+func (a *authAdapter) GetCredential() (*Credential, error) {
+	cred, err := a.store.Load()
+	if err != nil {
+		return nil, err
+	}
+	return authCredToBili(cred), nil
+}
+
+func (a *authAdapter) GetCredentialOrNil() *Credential {
+	cred, _ := a.store.Load()
+	return authCredToBili(cred)
+}
+
+func (a *authAdapter) RequireCredential(requireWrite bool) (*Credential, error) {
+	cred, err := a.store.Load()
+	if err != nil {
+		return nil, err
+	}
+	if cred == nil {
+		return nil, fmt.Errorf("not logged in")
+	}
+	bc := authCredToBili(cred)
+	if requireWrite && !bc.HasWriteCapability() {
+		return nil, fmt.Errorf("write permission required")
+	}
+	return bc, nil
+}
+
+func (a *authAdapter) Save(c *Credential) error {
+	return a.store.Save(biliCredToAuth(c))
+}
+
+func (a *authAdapter) Clear() error {
+	return a.store.Clear()
 }
 
 // BuildClient creates a client using the current credential.

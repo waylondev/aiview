@@ -17,14 +17,20 @@ type testVideo struct {
 }
 
 func TestResolveFormat_JSON(t *testing.T) {
-	f := ResolveFormat(true, false, false, false)
+	f, err := ResolveFormat(true, false, false, false)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if f != FormatJSON {
 		t.Errorf("expected FormatJSON, got %d", f)
 	}
 }
 
 func TestResolveFormat_YAML(t *testing.T) {
-	f := ResolveFormat(false, true, false, false)
+	f, err := ResolveFormat(false, true, false, false)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if f != FormatYAML {
 		t.Errorf("expected FormatYAML, got %d", f)
 	}
@@ -32,21 +38,30 @@ func TestResolveFormat_YAML(t *testing.T) {
 
 func TestResolveFormat_Default(t *testing.T) {
 	// When no format is specified and not a TTY, defaults to YAML
-	f := ResolveFormat(false, false, false, false)
+	f, err := ResolveFormat(false, false, false, false)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if f != FormatYAML && f != FormatTable {
 		t.Errorf("expected FormatYAML or FormatTable, got %d", f)
 	}
 }
 
 func TestResolveFormat_Table(t *testing.T) {
-	f := ResolveFormat(false, false, true, false)
+	f, err := ResolveFormat(false, false, true, false)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if f != FormatTable {
 		t.Errorf("expected FormatTable, got %d", f)
 	}
 }
 
 func TestResolveFormat_CSV(t *testing.T) {
-	f := ResolveFormat(false, false, false, true)
+	f, err := ResolveFormat(false, false, false, true)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if f != FormatCSV {
 		t.Errorf("expected FormatCSV, got %d", f)
 	}

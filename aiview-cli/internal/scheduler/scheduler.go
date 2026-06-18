@@ -3,7 +3,9 @@ package scheduler
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
@@ -137,8 +139,15 @@ func (s *Scheduler) executeJob(job *Job) {
 	}()
 
 	// Execute the command using the aiview binary itself
-	cmd := exec.Command("sh", "-c", job.Command)
-	_ = cmd.Run() // Best effort execution
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/C", job.Command)
+	} else {
+		cmd = exec.Command("sh", "-c", job.Command)
+	}
+	if err := cmd.Run(); err != nil {
+		log.Printf("Command execution failed: %v", err)
+	}
 }
 
 // ParseInterval parses a human-readable interval string.

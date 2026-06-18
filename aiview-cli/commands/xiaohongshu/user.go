@@ -26,7 +26,7 @@ Examples:
 				return err
 			}
 
-			format := output.GetFormat(cmd)
+			format := output.MustGetFormat(cmd)
 
 			result, err := client.GetUserInfo(args[0])
 			if err != nil {

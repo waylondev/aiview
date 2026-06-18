@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
+)
+
+const (
+	filePerm = 0600 // file permission: owner read-write
+	dirPerm  = 0700 // directory permission: owner read-write-execute
 )
 
 // JSONFileStorage stores records as JSON files.
@@ -19,7 +25,7 @@ type JSONFileStorage struct {
 
 // NewJSONFileStorage creates a new JSON file-based storage.
 func NewJSONFileStorage(dir string) (*JSONFileStorage, error) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		return nil, aiverr.APIError("storage", fmt.Sprintf("create storage dir: %v", err))
 	}
 	return &JSONFileStorage{dir: dir}, nil
@@ -37,7 +43,7 @@ func (s *JSONFileStorage) Save(record Record) error {
 	if err != nil {
 		return aiverr.ParseError("storage", fmt.Sprintf("marshal record: %v", err))
 	}
-	return os.WriteFile(filename, data, 0644)
+	return os.WriteFile(filename, data, filePerm)
 }
 
 func (s *JSONFileStorage) Query(platform, recordType string, limit int) ([]Record, error) {
@@ -57,7 +63,7 @@ func (s *JSONFileStorage) Query(platform, recordType string, limit int) ([]Recor
 			continue
 		}
 		name := entry.Name()
-		if len(name) < len(prefix) || name[:len(prefix)] != prefix {
+		if !strings.HasPrefix(name, prefix) {
 			continue
 		}
 

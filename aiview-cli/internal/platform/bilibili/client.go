@@ -16,8 +16,23 @@ import (
 )
 
 const (
-	baseURL   = "https://api.bilibili.com"
-	userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	baseURL = "https://api.bilibili.com"
+
+	// HTTP client constants
+	defaultUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	defaultReferer   = "https://www.bilibili.com"
+
+	// Bilibili API error codes
+	CodeNotAuthenticated = -101
+	CodeAccountBanned    = -111
+	CodeNotFound         = -404
+	CodeVideoUnavailable = 62002
+	CodeLoginRequired    = 62004
+	CodeRiskControl      = -352
+	CodeForbidden        = -403
+	CodeRateLimited      = -412
+	CodeRateLimitedAlt   = 412
+	CodeForbiddenAlt     = 403
 )
 
 // Client is the Bilibili API client.
@@ -34,7 +49,7 @@ var _ platform.UserQueryable = (*Client)(nil)
 // NewClient creates a new Bilibili API client.
 func NewClient(timeoutSec int, cookies string, credential *Credential) *Client {
 	return &Client{
-		Client:     base.NewClient(timeoutSec, cookies, userAgent, baseURL, "https://www.bilibili.com", "bilibili"),
+		Client:     base.NewClient(timeoutSec, cookies, defaultUserAgent, baseURL, defaultReferer, "bilibili"),
 		credential: credential,
 	}
 }
@@ -44,13 +59,13 @@ func (c *Client) PlatformName() string {
 	return "bilibili"
 }
 
-// BVIDRegex matches BV IDs.
-var BVIDRegex = regexp.MustCompile(`\bBV[0-9A-Za-z]{10}\b`)
+// bvidRegex matches BV IDs.
+var bvidRegex = regexp.MustCompile(`\bBV[0-9A-Za-z]{10}\b`)
 
 // BuildHeaders overrides the default to add bilibili-specific headers.
 func (c *Client) BuildHeaders() http.Header {
 	h := c.Client.BuildHeaders()
-	h.Set("Origin", "https://www.bilibili.com")
+	h.Set("Origin", defaultReferer)
 	h.Set("sec-ch-ua", "\"Chromium\";v=\"133\", \"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\"")
 	h.Set("sec-ch-ua-mobile", "?0")
 	h.Set("sec-ch-ua-platform", "\"Windows\"")
@@ -65,39 +80,40 @@ func (c *Client) buildRefererHeaders(referer string) http.Header {
 
 // classifyErrorCode maps bilibili API error codes to typed errors.
 func classifyErrorCode(code int, msg string) error {
-	if code == -101 || code == -111 {
+	if code == CodeNotAuthenticated || code == CodeAccountBanned {
 		return aiverr.NotAuthenticated("bilibili", msg)
 	}
-	if code == -404 || code == 62002 || code == 62004 {
+	if code == CodeNotFound || code == CodeVideoUnavailable || code == CodeLoginRequired {
 		return aiverr.NotFound("bilibili", msg)
 	}
-	if code == -412 || code == 412 {
+	if code == CodeRateLimited || code == CodeRateLimitedAlt {
 		return aiverr.RateLimited("bilibili", msg)
 	}
-	if code == -352 {
+	if code == CodeRiskControl {
 		return aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
 	}
-	if code == -403 || code == 403 {
+	if code == CodeForbidden || code == CodeForbiddenAlt {
 		return aiverr.Forbidden("bilibili", msg)
 	}
 	return aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
 }
 
-func (c *Client) doGet(path string, params url.Values, headers http.Header, useCache bool) (map[string]interface{}, error) {
-	reqURL := c.BaseURL + path
-	if len(params) > 0 {
-		reqURL += "?" + params.Encode()
-	}
-
-	// Check cache first
-	if useCache {
-		if cached, ok := c.Cache.Get(reqURL); ok {
-			return cached.(map[string]interface{}), nil
+func (c *Client) checkCache(key string) (map[string]interface{}, bool) {
+	if c.Cache != nil {
+		if cached, ok := c.Cache.Get(key); ok {
+			return cached.(map[string]interface{}), true
 		}
-		// Rate limit
+	}
+	return nil, false
+}
+
+func (c *Client) applyRateLimit() {
+	if c.Limiter != nil {
 		c.Limiter.Wait()
 	}
+}
 
+func (c *Client) executeRequest(reqURL string, headers http.Header) (map[string]interface{}, error) {
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
@@ -110,32 +126,57 @@ func (c *Client) doGet(path string, params url.Values, headers http.Header, useC
 	}
 	defer resp.Body.Close()
 
-	result, err := c.parseResponse(resp)
-	if err != nil && isRiskControlError(err) {
-		// -352 风控绕过：添加 buvid3 cookie 重试一次
-		retryReq, _ := http.NewRequest("GET", reqURL, nil)
-		retryReq.Header = headers
-		existingCookie := retryReq.Header.Get("Cookie")
-		if existingCookie != "" {
-			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
-		} else {
-			retryReq.Header.Set("Cookie", "buvid3=placeholder")
+	return c.parseResponse(resp)
+}
+
+func (c *Client) handleRiskControl(reqURL string, headers http.Header, originalErr error) (map[string]interface{}, error) {
+	if !isRiskControlError(originalErr) {
+		return nil, originalErr
+	}
+	// -352 风控绕过：添加 buvid3 cookie 重试一次
+	retryReq, err := http.NewRequest("GET", reqURL, nil)
+	if err != nil {
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create retry request: %v", err))
+	}
+	retryReq.Header = headers
+	existingCookie := retryReq.Header.Get("Cookie")
+	if existingCookie != "" {
+		retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
+	} else {
+		retryReq.Header.Set("Cookie", "buvid3=placeholder")
+	}
+	retryResp, err := c.HTTPClient.Do(retryReq)
+	if err != nil {
+		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
+	}
+	defer retryResp.Body.Close()
+	return c.parseResponse(retryResp)
+}
+
+func (c *Client) doGet(path string, params url.Values, headers http.Header, useCache bool) (map[string]interface{}, error) {
+	reqURL := c.BaseURL + path
+	if len(params) > 0 {
+		reqURL += "?" + params.Encode()
+	}
+
+	// Check cache first
+	if useCache {
+		if cached, ok := c.checkCache(reqURL); ok {
+			return cached, nil
 		}
-		retryResp, err := c.HTTPClient.Do(retryReq)
-		if err != nil {
-			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
-		}
-		defer retryResp.Body.Close()
-		result, err = c.parseResponse(retryResp)
+		c.applyRateLimit()
+	}
+
+	result, err := c.executeRequest(reqURL, headers)
+	if err != nil {
+		result, err = c.handleRiskControl(reqURL, headers, err)
 		if err != nil {
 			return nil, err
 		}
-	} else if err != nil {
-		return nil, err
 	}
 
 	// Store in cache
-	if useCache {
+	if useCache && c.Cache != nil {
 		c.Cache.Set(reqURL, result)
 	}
 	return result, nil
@@ -156,11 +197,7 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, err
 	}
 
 	// 检测 HTML 响应（直播间不存在或已关闭等情况）
-	contentType := resp.Header.Get("Content-Type")
-	bodyStr := string(body)
-	if strings.Contains(contentType, "text/html") ||
-		strings.HasPrefix(strings.TrimSpace(bodyStr), "<!DOCTYPE") ||
-		strings.HasPrefix(strings.TrimSpace(bodyStr), "<html") {
+	if c.DetectHTMLResponse(body) {
 		return nil, aiverr.NotFound("bilibili", "直播间不存在或已关闭")
 	}
 

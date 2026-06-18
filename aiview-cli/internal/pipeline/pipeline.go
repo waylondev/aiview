@@ -2,7 +2,7 @@
 package pipeline
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	aiverr "github.com/jackwener/aiview/internal/errors"
@@ -49,7 +49,7 @@ func (p *Pipeline) CollectAndStore(types []string) error {
 			return aiverr.Wrap(err, aiverr.CodeAPIError, "pipeline")
 		}
 
-		fmt.Printf("Collected and stored: %s/%s\n", p.platform, t)
+		log.Printf("Collected and stored: %s/%s\n", p.platform, t)
 	}
 	return nil
 }

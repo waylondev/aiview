@@ -10,8 +10,11 @@ import (
 )
 
 const (
-	baseURL   = "https://www.douyin.com"
-	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	baseURL = "https://www.douyin.com"
+
+	// HTTP client constants
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	defaultReferer   = "https://www.douyin.com/"
 )
 
 // Client is the Douyin API client.
@@ -27,7 +30,7 @@ var _ platform.UserQueryable = (*Client)(nil)
 // NewClient creates a new Douyin API client.
 func NewClient(timeoutSec int, cookies string) *Client {
 	return &Client{
-		Client: base.NewClient(timeoutSec, cookies, userAgent, baseURL, "https://www.douyin.com/", "douyin"),
+		Client: base.NewClient(timeoutSec, cookies, defaultUserAgent, baseURL, defaultReferer, "douyin"),
 	}
 }
 

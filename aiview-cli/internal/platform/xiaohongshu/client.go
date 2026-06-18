@@ -11,8 +11,11 @@ import (
 )
 
 const (
-	baseURL   = "https://edith.xiaohongshu.com"
-	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	baseURL = "https://edith.xiaohongshu.com"
+
+	// HTTP client constants
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+	defaultReferer   = "https://www.xiaohongshu.com"
 )
 
 // Client is the Xiaohongshu API client.
@@ -28,7 +31,7 @@ var _ platform.UserQueryable = (*Client)(nil)
 // NewClient creates a new Xiaohongshu API client.
 func NewClient(timeoutSec int, cookies string) *Client {
 	return &Client{
-		Client: base.NewClient(timeoutSec, cookies, userAgent, baseURL, "https://www.xiaohongshu.com", "xiaohongshu"),
+		Client: base.NewClient(timeoutSec, cookies, defaultUserAgent, baseURL, defaultReferer, "xiaohongshu"),
 	}
 }
 
@@ -40,7 +43,7 @@ func (c *Client) PlatformName() string {
 // BuildHeaders overrides the default to add xiaohongshu-specific headers.
 func (c *Client) BuildHeaders() http.Header {
 	h := c.Client.BuildHeaders()
-	h.Set("Origin", "https://www.xiaohongshu.com")
+	h.Set("Origin", defaultReferer)
 	h.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
 	h.Set("sec-ch-ua", `"Chromium";v="133", "Not(A:Brand";v="99", "Google Chrome";v="133"`)
 	h.Set("sec-ch-ua-mobile", "?0")
