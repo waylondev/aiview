@@ -321,22 +321,6 @@ func FormatCount(n int) string {
 	return fmt.Sprintf("%d", n)
 }
 
-// FormatDuration formats seconds into MM:SS or HH:MM:SS.
-func FormatDuration(seconds int) string {
-	if seconds < 0 {
-		seconds = 0
-	}
-	if seconds >= 3600 {
-		h := seconds / 3600
-		m := (seconds % 3600) / 60
-		s := seconds % 60
-		return fmt.Sprintf("%d:%02d:%02d", h, m, s)
-	}
-	m := seconds / 60
-	s := seconds % 60
-	return fmt.Sprintf("%02d:%02d", m, s)
-}
-
 // GetFormat extracts the output format from cobra command flags.
 func GetFormat(cmd *cobra.Command) Format {
 	parent := cmd

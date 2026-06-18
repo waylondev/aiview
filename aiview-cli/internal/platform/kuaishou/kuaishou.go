@@ -4,13 +4,14 @@ package kuaishou
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	kuaishouCommands "github.com/jackwener/aiview/commands/kuaishou"
 	"github.com/spf13/cobra"
 )
 
 // KuaishouPlatform implements the platform.Platform interface for Kuaishou.
 type KuaishouPlatform struct {
-	authStore    *AuthStore
+	*base.CookiePlatformBase
 	config       *config.Config
 	cachedClient *Client
 }
@@ -18,7 +19,7 @@ type KuaishouPlatform struct {
 // NewPlatform creates a new Kuaishou platform instance.
 func NewPlatform() *KuaishouPlatform {
 	return &KuaishouPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("kuaishou"),
 	}
 }
 
@@ -47,10 +48,10 @@ func (p *KuaishouPlatform) Commands() []*cobra.Command {
 
 	c := p.getClient()
 	isLoggedIn := func() bool {
-		return p.authStore.GetCookie() != ""
+		return p.GetCookie() != ""
 	}
 	kuaishouCmd.AddCommand(kuaishouCommands.NewLoginCmd(p.SaveCookie, func() kuaishouCommands.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}))
 	kuaishouCmd.AddCommand(kuaishouCommands.NewHotCmd(c, isLoggedIn))
 	kuaishouCmd.AddCommand(kuaishouCommands.NewSearchCmd(c, isLoggedIn))
@@ -68,11 +69,6 @@ func (p *KuaishouPlatform) getClient() *Client {
 	if p.config != nil && p.config.Platforms.Kuaishou.Timeout > 0 {
 		timeout = p.config.Platforms.Kuaishou.Timeout
 	}
-	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient
-}
-
-// SaveCookie saves the Kuaishou cookie to local credential storage.
-func (p *KuaishouPlatform) SaveCookie(cookie string) error {
-	return p.authStore.SaveCookie(cookie)
 }

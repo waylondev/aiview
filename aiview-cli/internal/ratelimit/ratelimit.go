@@ -27,25 +27,27 @@ func New(rate float64, burst int) *Limiter {
 
 // Wait blocks until a token is available.
 func (l *Limiter) Wait() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	for {
+		l.mu.Lock()
 
-	now := time.Now()
-	elapsed := now.Sub(l.lastTime).Seconds()
-	l.tokens += elapsed * l.rate
-	if l.tokens > float64(l.burst) {
-		l.tokens = float64(l.burst)
-	}
-	l.lastTime = now
+		now := time.Now()
+		elapsed := now.Sub(l.lastTime).Seconds()
+		l.tokens += elapsed * l.rate
+		if l.tokens > float64(l.burst) {
+			l.tokens = float64(l.burst)
+		}
+		l.lastTime = now
 
-	if l.tokens < 1 {
+		if l.tokens >= 1 {
+			l.tokens--
+			l.mu.Unlock()
+			return
+		}
+
+		// Calculate how long to wait for at least 1 token.
 		waitDuration := time.Duration((1 - l.tokens) / l.rate * float64(time.Second))
 		l.mu.Unlock()
 		time.Sleep(waitDuration)
-		l.mu.Lock()
-		l.tokens = 0
-	} else {
-		l.tokens--
 	}
 }
 

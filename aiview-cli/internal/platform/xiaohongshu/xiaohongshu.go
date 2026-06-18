@@ -4,21 +4,22 @@ package xiaohongshu
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	xhsCmd "github.com/jackwener/aiview/commands/xiaohongshu"
 	"github.com/spf13/cobra"
 )
 
 // XiaohongshuPlatform implements the platform.Platform interface for Xiaohongshu.
 type XiaohongshuPlatform struct {
+	*base.CookiePlatformBase
 	config       *config.Config
-	authStore    *AuthStore
 	cachedClient *Client
 }
 
 // NewPlatform creates a new Xiaohongshu platform instance.
 func NewPlatform() *XiaohongshuPlatform {
 	return &XiaohongshuPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("xiaohongshu"),
 	}
 }
 
@@ -47,10 +48,10 @@ func (p *XiaohongshuPlatform) Commands() []*cobra.Command {
 
 	c := p.getClient()
 	isLoggedIn := func() bool {
-		return p.authStore.GetCookie() != ""
+		return p.GetCookie() != ""
 	}
 	xhsCommand.AddCommand(xhsCmd.NewLoginCmd(p.SaveCookie, func() xhsCmd.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}))
 	xhsCommand.AddCommand(xhsCmd.NewHotCmd(c, isLoggedIn))
 	xhsCommand.AddCommand(xhsCmd.NewSearchCmd(c, isLoggedIn))
@@ -69,11 +70,6 @@ func (p *XiaohongshuPlatform) getClient() *Client {
 	if p.config != nil && p.config.Platforms.Xiaohongshu.Timeout > 0 {
 		timeout = p.config.Platforms.Xiaohongshu.Timeout
 	}
-	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient
-}
-
-// SaveCookie saves the Xiaohongshu cookie to local credential storage.
-func (p *XiaohongshuPlatform) SaveCookie(cookie string) error {
-	return p.authStore.SaveCookie(cookie)
 }

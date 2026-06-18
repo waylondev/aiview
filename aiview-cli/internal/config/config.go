@@ -13,50 +13,20 @@ type Config struct {
 	Platforms PlatformsConfig  `mapstructure:"platforms"`
 }
 
+// PlatformConfig holds configuration for a social media platform.
+type PlatformConfig struct {
+	Cookies string `mapstructure:"cookies"`
+	Timeout int    `mapstructure:"timeout"`
+}
+
 // PlatformsConfig holds platform-specific configurations.
 type PlatformsConfig struct {
-	Bilibili    BilibiliConfig    `mapstructure:"bilibili"`
-	Douyin      DouyinConfig      `mapstructure:"douyin"`
-	Weibo       WeiboConfig       `mapstructure:"weibo"`
-	Kuaishou    KuaishouConfig    `mapstructure:"kuaishou"`
-	Xiaohongshu XiaohongshuConfig `mapstructure:"xiaohongshu"`
-	Zhihu       ZhihuConfig       `mapstructure:"zhihu"`
-}
-
-// DouyinConfig holds Douyin-specific configuration.
-type DouyinConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
-}
-
-// BilibiliConfig holds Bilibili-specific configuration.
-type BilibiliConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
-}
-
-// WeiboConfig holds Weibo-specific configuration.
-type WeiboConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
-}
-
-// KuaishouConfig holds Kuaishou-specific configuration.
-type KuaishouConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
-}
-
-// XiaohongshuConfig holds Xiaohongshu-specific configuration.
-type XiaohongshuConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
-}
-
-// ZhihuConfig holds Zhihu-specific configuration.
-type ZhihuConfig struct {
-	Cookies string `mapstructure:"cookies"`
-	Timeout int    `mapstructure:"timeout"`
+	Bilibili    PlatformConfig `mapstructure:"bilibili"`
+	Douyin      PlatformConfig `mapstructure:"douyin"`
+	Weibo       PlatformConfig `mapstructure:"weibo"`
+	Kuaishou    PlatformConfig `mapstructure:"kuaishou"`
+	Xiaohongshu PlatformConfig `mapstructure:"xiaohongshu"`
+	Zhihu       PlatformConfig `mapstructure:"zhihu"`
 }
 
 // DefaultConfig returns the default configuration.
@@ -66,7 +36,7 @@ func DefaultConfig() *Config {
 		CacheTTL: 300,
 		Output:   "auto",
 		Platforms: PlatformsConfig{
-			Bilibili: BilibiliConfig{
+			Bilibili: PlatformConfig{
 				Timeout: 30,
 			},
 		},

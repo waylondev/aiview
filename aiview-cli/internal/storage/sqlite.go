@@ -33,6 +33,16 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		return nil, aiverr.APIError("storage", fmt.Sprintf("create table: %v", err))
 	}
 
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_platform_type ON records (platform, type)`)
+	if err != nil {
+		return nil, aiverr.APIError("storage", fmt.Sprintf("create index idx_platform_type: %v", err))
+	}
+
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_collected_at ON records (collected_at)`)
+	if err != nil {
+		return nil, aiverr.APIError("storage", fmt.Sprintf("create index idx_collected_at: %v", err))
+	}
+
 	return &SQLiteStorage{db: db}, nil
 }
 

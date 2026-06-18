@@ -4,13 +4,14 @@ package weibo
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	weiboCommands "github.com/jackwener/aiview/commands/weibo"
 	"github.com/spf13/cobra"
 )
 
 // WeiboPlatform implements the platform.Platform interface for Weibo.
 type WeiboPlatform struct {
-	authStore    *AuthStore
+	*base.CookiePlatformBase
 	config       *config.Config
 	cachedClient *Client
 }
@@ -18,7 +19,7 @@ type WeiboPlatform struct {
 // NewPlatform creates a new Weibo platform instance.
 func NewPlatform() *WeiboPlatform {
 	return &WeiboPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("weibo"),
 	}
 }
 
@@ -47,10 +48,10 @@ func (p *WeiboPlatform) Commands() []*cobra.Command {
 
 	c := p.getClient()
 	isLoggedIn := func() bool {
-		return p.authStore.GetCookie() != ""
+		return p.GetCookie() != ""
 	}
 	weiboCmd.AddCommand(weiboCommands.NewLoginCmd(p.SaveCookie, func() weiboCommands.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}))
 	weiboCmd.AddCommand(weiboCommands.NewHotCmd(c, isLoggedIn))
 	weiboCmd.AddCommand(weiboCommands.NewSearchCmd(c, isLoggedIn))
@@ -68,11 +69,6 @@ func (p *WeiboPlatform) getClient() *Client {
 	if p.config != nil && p.config.Platforms.Weibo.Timeout > 0 {
 		timeout = p.config.Platforms.Weibo.Timeout
 	}
-	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient
-}
-
-// SaveCookie saves the Weibo cookie to local credential storage.
-func (p *WeiboPlatform) SaveCookie(cookie string) error {
-	return p.authStore.SaveCookie(cookie)
 }

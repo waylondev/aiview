@@ -31,7 +31,7 @@ func (s *JSONFileStorage) Save(record Record) error {
 
 	filename := filepath.Join(s.dir, fmt.Sprintf("%s_%s_%s.json",
 		record.Platform, record.Type,
-		time.Now().Format("20060102_150405")))
+		time.Now().Format("20060102_150405.000000000")))
 
 	data, err := json.MarshalIndent(record, "", "  ")
 	if err != nil {

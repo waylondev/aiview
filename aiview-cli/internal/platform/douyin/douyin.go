@@ -4,13 +4,14 @@ package douyin
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	douyinCommands "github.com/jackwener/aiview/commands/douyin"
 	"github.com/spf13/cobra"
 )
 
 // DouyinPlatform implements the platform.Platform interface for Douyin.
 type DouyinPlatform struct {
-	authStore    *AuthStore
+	*base.CookiePlatformBase
 	config       *config.Config
 	cachedClient *Client
 }
@@ -18,7 +19,7 @@ type DouyinPlatform struct {
 // NewPlatform creates a new Douyin platform instance.
 func NewPlatform() *DouyinPlatform {
 	return &DouyinPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("douyin"),
 	}
 }
 
@@ -47,10 +48,10 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 
 	c := p.getClient()
 	isLoggedIn := func() bool {
-		return p.authStore.GetCookie() != ""
+		return p.GetCookie() != ""
 	}
 	douyinCmd.AddCommand(douyinCommands.NewLoginCmd(p.SaveCookie, func() douyinCommands.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}))
 	douyinCmd.AddCommand(douyinCommands.NewHotCmd(c, isLoggedIn))
 	douyinCmd.AddCommand(douyinCommands.NewTrendingCmd(c, isLoggedIn))
@@ -62,7 +63,7 @@ func (p *DouyinPlatform) Commands() []*cobra.Command {
 	douyinCmd.AddCommand(douyinCommands.NewStatusCmd(func() (map[string]interface{}, error) { return p.Status() }))
 	douyinCmd.AddCommand(douyinCommands.NewLogoutCmd(func() error { return p.Logout() }))
 	douyinCmd.AddCommand(douyinCommands.NewCollectCmd(func() douyinCommands.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}, isLoggedIn))
 
 	return []*cobra.Command{douyinCmd}
@@ -77,26 +78,6 @@ func (p *DouyinPlatform) getClient() *Client {
 	if p.config != nil && p.config.Platforms.Douyin.Timeout > 0 {
 		timeout = p.config.Platforms.Douyin.Timeout
 	}
-	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient
-}
-
-// SaveCookie saves the Douyin cookie to local credential storage.
-func (p *DouyinPlatform) SaveCookie(cookie string) error {
-	return p.authStore.SaveCookie(cookie)
-}
-
-// Status returns the current login status.
-func (p *DouyinPlatform) Status() (map[string]interface{}, error) {
-	cookie := p.authStore.GetCookie()
-	loggedIn := cookie != ""
-	return map[string]interface{}{
-		"platform":  "douyin",
-		"logged_in": loggedIn,
-	}, nil
-}
-
-// Logout clears the stored credential.
-func (p *DouyinPlatform) Logout() error {
-	return p.authStore.ClearCookie()
 }

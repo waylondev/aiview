@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/jackwener/aiview/internal/helper"
 )
 
 type testVideo struct {
@@ -82,7 +84,7 @@ func TestFormatDuration(t *testing.T) {
 		{3661, "1:01:01"},
 	}
 	for _, tt := range tests {
-		got := FormatDuration(tt.seconds)
+		got := helper.FormatDuration(tt.seconds)
 		if got != tt.expected {
 			t.Errorf("FormatDuration(%d) = %q, want %q", tt.seconds, got, tt.expected)
 		}
@@ -90,7 +92,7 @@ func TestFormatDuration(t *testing.T) {
 }
 
 func TestFormatDuration_Negative(t *testing.T) {
-	got := FormatDuration(-10)
+	got := helper.FormatDuration(-10)
 	if got != "00:00" {
 		t.Errorf("expected '00:00' for negative, got %q", got)
 	}

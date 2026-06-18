@@ -4,13 +4,14 @@ package zhihu
 import (
 	"github.com/jackwener/aiview/internal/config"
 	"github.com/jackwener/aiview/internal/platform"
+	"github.com/jackwener/aiview/internal/platform/base"
 	zhihuCommands "github.com/jackwener/aiview/commands/zhihu"
 	"github.com/spf13/cobra"
 )
 
 // ZhihuPlatform implements the platform.Platform interface for Zhihu.
 type ZhihuPlatform struct {
-	authStore    *AuthStore
+	*base.CookiePlatformBase
 	config       *config.Config
 	cachedClient *Client
 }
@@ -18,7 +19,7 @@ type ZhihuPlatform struct {
 // NewPlatform creates a new Zhihu platform instance.
 func NewPlatform() *ZhihuPlatform {
 	return &ZhihuPlatform{
-		authStore: NewAuthStore(),
+		CookiePlatformBase: base.NewCookiePlatformBase("zhihu"),
 	}
 }
 
@@ -47,10 +48,10 @@ func (p *ZhihuPlatform) Commands() []*cobra.Command {
 
 	c := p.getClient()
 	isLoggedIn := func() bool {
-		return p.authStore.GetCookie() != ""
+		return p.GetCookie() != ""
 	}
 	zhihuCmd.AddCommand(zhihuCommands.NewLoginCmd(p.SaveCookie, func() zhihuCommands.Client {
-		return NewClient(30, p.authStore.GetCookie())
+		return NewClient(30, p.GetCookie())
 	}))
 	zhihuCmd.AddCommand(zhihuCommands.NewHotCmd(c, isLoggedIn))
 	zhihuCmd.AddCommand(zhihuCommands.NewSearchCmd(c, isLoggedIn))
@@ -68,11 +69,6 @@ func (p *ZhihuPlatform) getClient() *Client {
 	if p.config != nil && p.config.Platforms.Zhihu.Timeout > 0 {
 		timeout = p.config.Platforms.Zhihu.Timeout
 	}
-	p.cachedClient = NewClient(timeout, p.authStore.GetCookie())
+	p.cachedClient = NewClient(timeout, p.GetCookie())
 	return p.cachedClient
-}
-
-// SaveCookie saves the Zhihu cookie to local credential storage.
-func (p *ZhihuPlatform) SaveCookie(cookie string) error {
-	return p.authStore.SaveCookie(cookie)
 }

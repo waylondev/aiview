@@ -63,25 +63,46 @@ func (c *Client) buildRefererHeaders(referer string) http.Header {
 	return h
 }
 
-func (c *Client) get(path string, params url.Values) (map[string]interface{}, error) {
+// classifyErrorCode maps bilibili API error codes to typed errors.
+func classifyErrorCode(code int, msg string) error {
+	if code == -101 || code == -111 {
+		return aiverr.NotAuthenticated("bilibili", msg)
+	}
+	if code == -404 || code == 62002 || code == 62004 {
+		return aiverr.NotFound("bilibili", msg)
+	}
+	if code == -412 || code == 412 {
+		return aiverr.RateLimited("bilibili", msg)
+	}
+	if code == -352 {
+		return aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
+	}
+	if code == -403 || code == 403 {
+		return aiverr.Forbidden("bilibili", msg)
+	}
+	return aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
+}
+
+func (c *Client) doGet(path string, params url.Values, headers http.Header, useCache bool) (map[string]interface{}, error) {
 	reqURL := c.BaseURL + path
 	if len(params) > 0 {
 		reqURL += "?" + params.Encode()
 	}
 
 	// Check cache first
-	if cached, ok := c.Cache.Get(reqURL); ok {
-		return cached.(map[string]interface{}), nil
+	if useCache {
+		if cached, ok := c.Cache.Get(reqURL); ok {
+			return cached.(map[string]interface{}), nil
+		}
+		// Rate limit
+		c.Limiter.Wait()
 	}
-
-	// Rate limit
-	c.Limiter.Wait()
 
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
 	}
-	req.Header = c.BuildHeaders()
+	req.Header = headers
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -93,7 +114,7 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	if err != nil && isRiskControlError(err) {
 		// -352 风控绕过：添加 buvid3 cookie 重试一次
 		retryReq, _ := http.NewRequest("GET", reqURL, nil)
-		retryReq.Header = c.BuildHeaders()
+		retryReq.Header = headers
 		existingCookie := retryReq.Header.Get("Cookie")
 		if existingCookie != "" {
 			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
@@ -114,47 +135,18 @@ func (c *Client) get(path string, params url.Values) (map[string]interface{}, er
 	}
 
 	// Store in cache
-	c.Cache.Set(reqURL, result)
+	if useCache {
+		c.Cache.Set(reqURL, result)
+	}
 	return result, nil
 }
 
+func (c *Client) get(path string, params url.Values) (map[string]interface{}, error) {
+	return c.doGet(path, params, c.BuildHeaders(), true)
+}
+
 func (c *Client) getWithReferer(path string, params url.Values, referer string) (map[string]interface{}, error) {
-	reqURL := c.BaseURL + path
-	if len(params) > 0 {
-		reqURL += "?" + params.Encode()
-	}
-
-	req, err := http.NewRequest("GET", reqURL, nil)
-	if err != nil {
-		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("failed to create request: %v", err))
-	}
-	req.Header = c.buildRefererHeaders(referer)
-
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed: %v", err))
-	}
-	defer resp.Body.Close()
-
-	result, err := c.parseResponse(resp)
-	if err != nil && isRiskControlError(err) {
-		// -352 风控绕过：添加 buvid3 cookie 重试一次
-		retryReq, _ := http.NewRequest("GET", reqURL, nil)
-		retryReq.Header = c.buildRefererHeaders(referer)
-		existingCookie := retryReq.Header.Get("Cookie")
-		if existingCookie != "" {
-			retryReq.Header.Set("Cookie", existingCookie+"; buvid3=placeholder")
-		} else {
-			retryReq.Header.Set("Cookie", "buvid3=placeholder")
-		}
-		retryResp, err := c.HTTPClient.Do(retryReq)
-		if err != nil {
-			return nil, aiverr.NetworkError("bilibili", fmt.Sprintf("network request failed on retry: %v", err))
-		}
-		defer retryResp.Body.Close()
-		return c.parseResponse(retryResp)
-	}
-	return result, err
+	return c.doGet(path, params, c.buildRefererHeaders(referer), false)
 }
 
 func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, error) {
@@ -180,22 +172,7 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]interface{}, err
 	code := helper.GetInt(result, "code")
 	if code != 0 {
 		msg := helper.GetString(result, "message")
-		if code == -101 || code == -111 {
-			return nil, aiverr.NotAuthenticated("bilibili", msg)
-		}
-		if code == -404 || code == 62002 || code == 62004 {
-			return nil, aiverr.NotFound("bilibili", msg)
-		}
-		if code == -412 || code == 412 {
-			return nil, aiverr.RateLimited("bilibili", msg)
-		}
-		if code == -352 {
-			return nil, aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
-		}
-		if code == -403 || code == 403 {
-			return nil, aiverr.Forbidden("bilibili", msg)
-		}
-		return nil, aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
+		return nil, classifyErrorCode(code, msg)
 	}
 
 	return result, nil
@@ -233,22 +210,7 @@ func (c *Client) post(path string, params url.Values) (map[string]interface{}, e
 	code := helper.GetInt(result, "code")
 	if code != 0 {
 		msg := helper.GetString(result, "message")
-		if code == -101 || code == -111 {
-			return nil, aiverr.NotAuthenticated("bilibili", msg)
-		}
-		if code == -404 || code == 62002 || code == 62004 {
-			return nil, aiverr.NotFound("bilibili", msg)
-		}
-		if code == -412 || code == 412 {
-			return nil, aiverr.RateLimited("bilibili", msg)
-		}
-		if code == -352 {
-			return nil, aiverr.RateLimited("bilibili", fmt.Sprintf("Risk control triggered (code %d): %s", code, msg))
-		}
-		if code == -403 || code == 403 {
-			return nil, aiverr.Forbidden("bilibili", msg)
-		}
-		return nil, aiverr.APIError("bilibili", fmt.Sprintf("API error [%d]: %s", code, msg))
+		return nil, classifyErrorCode(code, msg)
 	}
 
 	return result, nil

@@ -17,6 +17,7 @@ type Cache struct {
 	mu      sync.RWMutex
 	entries map[string]entry
 	ttl     time.Duration
+	done    chan struct{}
 }
 
 // New creates a new Cache with the given TTL.
@@ -24,6 +25,7 @@ func New(ttl time.Duration) *Cache {
 	c := &Cache{
 		entries: make(map[string]entry),
 		ttl:     ttl,
+		done:    make(chan struct{}),
 	}
 	go c.cleanup()
 	return c
@@ -66,17 +68,27 @@ func (c *Cache) Clear() {
 	c.entries = make(map[string]entry)
 }
 
+// Stop stops the cleanup goroutine.
+func (c *Cache) Stop() {
+	close(c.done)
+}
+
 func (c *Cache) cleanup() {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		c.mu.Lock()
-		now := time.Now()
-		for k, e := range c.entries {
-			if now.After(e.expiresAt) {
-				delete(c.entries, k)
+	for {
+		select {
+		case <-c.done:
+			return
+		case <-ticker.C:
+			c.mu.Lock()
+			now := time.Now()
+			for k, e := range c.entries {
+				if now.After(e.expiresAt) {
+					delete(c.entries, k)
+				}
 			}
+			c.mu.Unlock()
 		}
-		c.mu.Unlock()
 	}
 }

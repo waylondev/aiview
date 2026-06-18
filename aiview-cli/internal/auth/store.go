@@ -91,3 +91,63 @@ func (s *Store) Clear() error {
 	}
 	return nil
 }
+
+// CookieStore provides cookie-based authentication storage for any platform.
+type CookieStore struct {
+	platform string
+}
+
+// credential holds simple cookie-based authentication data on disk.
+type cookieCredential struct {
+	Cookie string `json:"cookie"`
+}
+
+// NewCookieStore creates a new cookie store for the specified platform.
+func NewCookieStore(platform string) *CookieStore {
+	return &CookieStore{
+		platform: platform,
+	}
+}
+
+// SaveCookie saves the cookie to disk.
+func (s *CookieStore) SaveCookie(cookie string) error {
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".aiview")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	file := filepath.Join(dir, s.platform+"_credential.json")
+	cred := cookieCredential{Cookie: cookie}
+	data, err := json.MarshalIndent(cred, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(file, data, 0600)
+}
+
+// GetCookie loads the saved cookie from disk.
+func (s *CookieStore) GetCookie() (string, error) {
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".aiview")
+	file := filepath.Join(dir, s.platform+"_credential.json")
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	var cred cookieCredential
+	if err := json.Unmarshal(data, &cred); err != nil {
+		return "", err
+	}
+	return cred.Cookie, nil
+}
+
+// ClearCookie removes the stored credential from disk.
+func (s *CookieStore) ClearCookie() error {
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".aiview")
+	file := filepath.Join(dir, s.platform+"_credential.json")
+	if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
